@@ -1,10 +1,13 @@
 package com.sqli.gdmr.Models;
 
+import com.sqli.gdmr.Enums.StatusVisite;
+import com.sqli.gdmr.Enums.TypesVisite;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 
 
 @Entity
@@ -13,19 +16,38 @@ public class Creneau {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idCréneau;
-    private LocalDateTime date;
-    private int duration;
-    private boolean disponibilite;
-
-    private LocalTime heureDebutSession;
-
-    private LocalTime heureFinSession;
+    private LocalDate date;
+    //private Integer duree;
+    private LocalTime heureDebutVisite;
+    private LocalTime heureFinVisite;
+    //private boolean disponible;// je vais utiliser si le status de visite est validé
 
     @ManyToOne
-    private ChargeRH chargeRH;
+    @JoinColumn(name = "charge_rh_id")
+    private User chargeRh;
 
     @ManyToOne
-    @JoinColumn(name = "MedecinId")
+    @JoinColumn(name = "collaborateur_id")
+    private Collaborateur collaborateur;
+
+    @ManyToOne
+    @JoinColumn(name = "medecin_id")
     private Medecin medecin;
+
+    @Enumerated(EnumType.STRING)
+    private TypesVisite typeVisite;
+    private String motif;
+    @Enumerated(EnumType.STRING)
+    private StatusVisite statusVisite;
+    private String justifNonValide;// pour le collaborateur qui a pas aimer le crenenau choisi par le rh
+    private String justifAnnuleMedecin;// si le collaborateur n'a pas venu à la visite ou un urgence
+    private String justifAnnuleCollaborateur; // si le collaborateur est abscent, un empechement
+    private LocalDate dateCreation;
+
+
+    // Méthode pour calculer la durée si nécessaire
+//    public long getDureeMinutes() {
+//        return ChronoUnit.MINUTES.between(heureDebutVisite, heureFinVisite);
+//    }
 
 }

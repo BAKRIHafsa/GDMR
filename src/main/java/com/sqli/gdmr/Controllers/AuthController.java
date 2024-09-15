@@ -2,9 +2,13 @@ package com.sqli.gdmr.Controllers;
 
 //import com.sqli.gdmr.Services.AuthenticationService;
 import com.sqli.gdmr.Models.LoginRequest;
+import com.sqli.gdmr.Models.User;
+import com.sqli.gdmr.Repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -29,16 +33,23 @@ public class AuthController {
     @Autowired
     private JwtEncoder jwtEncoder;
 
+    @Autowired
+    private UserRepository userRepository;
+
 @PostMapping("/auth/login")
 public Map<String, String> login(@RequestBody LoginRequest loginRequest) {
     String username = loginRequest.getUsername();
     String password = loginRequest.getPassword();
 
-    System.out.println("user: " + username + " password: " + password);
+    //System.out.println("user: " + username + " password: " + password);
 
     org.springframework.security.core.Authentication authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(username, password)
     );
+
+    UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+    User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
     Instant instant = Instant.now();
     String scope = authentication.getAuthorities().stream()
@@ -50,6 +61,7 @@ public Map<String, String> login(@RequestBody LoginRequest loginRequest) {
             .expiresAt(instant.plus(30, ChronoUnit.MINUTES))
             .subject(username)
             .claim("scope", scope)
+            .claim("userId", user.getIdUser())
             .build();
 
     JwtEncoderParameters jwtEncoderParameters = JwtEncoderParameters.from(

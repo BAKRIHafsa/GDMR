@@ -71,4 +71,9 @@ public class AdminController {
         User archivedUser = userService.archiveUser(id);
         return ResponseEntity.ok(archivedUser);
     }
+
+    @PostMapping("/create")
+    public User createUser(@RequestBody User userCreation) {
+        return userService.createUser(userCreation);
+    }
 }

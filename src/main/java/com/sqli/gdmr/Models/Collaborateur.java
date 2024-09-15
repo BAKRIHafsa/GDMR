@@ -1,5 +1,6 @@
 package com.sqli.gdmr.Models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -14,10 +15,10 @@ public class Collaborateur extends User {
 //    @GeneratedValue(strategy = GenerationType.IDENTITY)
 //    private Long IdCollaborateur;
     private String departement;
-    @OneToOne
-    @JoinColumn(name = "dossierMedical_Id")
-    private DossierMedical dossierMedical;
-    @OneToMany(mappedBy = "collaborateur", fetch = FetchType.LAZY)
-    private List<Visite> visites=new ArrayList<>();
+
+    @OneToOne(mappedBy = "collaborateur", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private Antecedant antecedant;
+
 
 }

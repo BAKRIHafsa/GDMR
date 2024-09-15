@@ -18,9 +18,5 @@ public class Medecin extends User {
     private String qualification;
     private String experience;
 
-    @OneToMany(mappedBy = "medecin", fetch = FetchType.LAZY)
-    private List<Visite> visites=new ArrayList<>();
-
-
 
 }

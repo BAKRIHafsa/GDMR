@@ -1,5 +1,8 @@
 package com.sqli.gdmr.Models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.sqli.gdmr.Enums.GroupeSanguin;
+import com.sqli.gdmr.Enums.Sexe;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -11,9 +14,37 @@ public class Antecedant {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idAntecedant;
-    private LocalDate dateAntecedant;
-    private String description;
-    @ManyToOne
-    @JoinColumn(name = "dossierMedical_id")
-    private DossierMedical dossierMedical;
+    @Enumerated(EnumType.STRING)
+    private Sexe sexe;
+    private Double height;
+    private Double weight;
+    @Enumerated(EnumType.STRING)
+    private GroupeSanguin groupeSanguin;
+    private String allergies;
+    private String medicaments;
+    private Boolean fume;
+
+    @OneToOne
+    @JoinColumn(name = "collaborateur_id")
+    @JsonIgnore
+    private Collaborateur collaborateur;
+
+    @Override
+    public String toString() {
+        return "Antecedant{" +
+                "idAntecedant=" + idAntecedant +
+                ", sexe=" + sexe +
+                ", height=" + height +
+                ", weight=" + weight +
+                ", groupeSanguin=" + groupeSanguin +
+                ", allergies='" + allergies + '\'' +
+                ", medicaments='" + medicaments + '\'' +
+                ", fume=" + fume +
+                '}';
+    }
+
+
 }
+
+
+

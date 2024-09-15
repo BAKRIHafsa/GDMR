@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -24,7 +25,27 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserStatus Status = UserStatus.CREATED;
     private LocalDate dateNaissance;
+    @Override
+    public String toString() {
+        return "User{" +
+                "idUser=" + idUser +
+                ", username='" + username + '\'' +
+                ", nom='" + nom + '\'' +
+                ", prenom='" + prenom + '\'' +
+                ", role=" + role +
+                ", status=" + Status +
+                ", dateNaissance=" + dateNaissance +
+                '}';
+    }
 
+    public User(String nom, String prenom, String username, LocalDate dateNaissance, Role role) {
+        this.nom = nom;
+        this.prenom = prenom;
+        this.username = username;
+        this.dateNaissance = dateNaissance;
+        this.role = role;
+    }
 
-
+    public User() {
+    }
 }

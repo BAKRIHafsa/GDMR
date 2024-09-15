@@ -68,9 +68,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ADMINISTRATEUR")//permitAll()
-                        //.requestMatchers("/api/collaborateur/**").hasAnyRole("COLLABORATEUR", "CHARGE_RH", "ADMINISTRATEUR")
-                        //.requestMatchers("/api/medecin/**").hasAnyRole("MEDECIN", "ADMINISTRATEUR")
-                        //.requestMatchers("/api/charge-rh/**").hasAnyRole("CHARGE_RH", "ADMINISTRATEUR")
+                        .requestMatchers("/api/chargéRH/**").hasAuthority("CHARGE_RH")//permitAll()
+                        .requestMatchers("/api/collab/**").hasAnyAuthority("COLLABORATEUR", "CHARGE_RH", "ADMINISTRATEUR")
+                        .requestMatchers("/api/med/**").hasAuthority("MEDECIN")
+                        .requestMatchers("/api/disponibilites/medecin/**").hasAnyAuthority("CHARGE_RH", "MEDECIN")
+                        .requestMatchers("/api/creneaux/**").hasAuthority("CHARGE_RH")
                         .anyRequest().authenticated()
                 )
                 //.httpBasic(Customizer.withDefaults())
@@ -82,7 +84,7 @@ public class SecurityConfig {
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
         grantedAuthoritiesConverter.setAuthoritiesClaimName("scope");
-        grantedAuthoritiesConverter.setAuthorityPrefix(""); // Remove this line if you want to keep the "SCOPE_" prefix
+        grantedAuthoritiesConverter.setAuthorityPrefix("");
 
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
