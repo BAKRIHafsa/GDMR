@@ -53,7 +53,11 @@ public class AdminController {
 
     @PostMapping("/users")
     //@PreAuthorize("hasAuthority('ADMINISTRATEUR')")
-    public ResponseEntity<String> createUser(@RequestBody Long userId) {
+    public ResponseEntity<String> createUser(@RequestBody Map<String, Long> requestBody) {
+        Long userId = requestBody.get("idUser");
+        if (userId == null) {
+            return ResponseEntity.badRequest().body("User ID is required");
+        }
         String createdUser = userService.createUser(userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }

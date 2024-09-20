@@ -7,6 +7,7 @@ import com.sqli.gdmr.Models.Creneau;
 import com.sqli.gdmr.Models.User;
 import com.sqli.gdmr.Repositories.DashboardRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -29,8 +30,42 @@ public class DashboardRHService {
     private UserService userService;
 
 
-    public List<DashboardRHDTO>  getAllVisitsDetailsCollab() {
-        // List of statuses to include
+//    public List<DashboardRHDTO>  getAllVisitsDetailsCollab() {
+//        // List of statuses to include
+//        List<StatusVisite> statusesToInclude = Arrays.asList(
+//                StatusVisite.PLANIFIE,
+//                StatusVisite.EN_COURS,
+//                StatusVisite.TERMINE,
+//                StatusVisite.ANNULE,
+//                StatusVisite.NON_VALIDE,
+//                StatusVisite.CONFIRME_COLLAB,
+//                StatusVisite.CONFIRME_MED
+//        );
+//
+//        // Retrieve all visits
+//        List<Creneau> allVisits = dashboardRepository.findAll();
+//
+//        // Filter by status
+//        List<Creneau> filteredVisits = allVisits.stream()
+//                .filter(creneau -> statusesToInclude.contains(creneau.getStatusVisite()))
+//                .collect(Collectors.toList());
+//
+//        // Map to DTO
+//        return filteredVisits.stream()
+//                .map(DashboardRHMapper::toDashboardRHDTO)
+//                .collect(Collectors.toList());
+//    }
+
+
+    public List<DashboardRHDTO> getAllVisitsDetailsCollab() {
+        // Récupérer l'utilisateur connecté
+        User currentUser = userService.getCurrentUser();
+
+        if (currentUser == null) {
+            throw new AuthenticationException("Utilisateur non authentifié") {};
+        }
+
+        // Liste des statuts à inclure
         List<StatusVisite> statusesToInclude = Arrays.asList(
                 StatusVisite.PLANIFIE,
                 StatusVisite.EN_COURS,
@@ -41,22 +76,20 @@ public class DashboardRHService {
                 StatusVisite.CONFIRME_MED
         );
 
-        // Retrieve all visits
+        // Récupérer toutes les visites
         List<Creneau> allVisits = dashboardRepository.findAll();
 
-        // Filter by status
+        // Filtrer les visites par statut et par utilisateur connecté
         List<Creneau> filteredVisits = allVisits.stream()
-                .filter(creneau -> statusesToInclude.contains(creneau.getStatusVisite()))
+                .filter(creneau -> statusesToInclude.contains(creneau.getStatusVisite()))  // Filtrer par statut
+                .filter(creneau -> creneau.getCollaborateur().getIdUser().equals(currentUser.getIdUser()))
                 .collect(Collectors.toList());
 
-        // Map to DTO
+        // Mapper en DTO
         return filteredVisits.stream()
                 .map(DashboardRHMapper::toDashboardRHDTO)
                 .collect(Collectors.toList());
     }
-
-
-
     public List<DashboardRHDTO> getAllVisitsDetails() {
         // List of statuses to include
         List<StatusVisite> statusesToInclude = Arrays.asList(
