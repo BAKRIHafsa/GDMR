@@ -390,4 +390,8 @@ public Map<String, List<User>> getActiveAndCreatedCollaborateursAndChargeRH() {
         return userRepository.findByRole(Role.COLLABORATEUR);
     }
 
+    public User findById(Long id) {
+        return userRepository.findById(id).orElse(null);
+    }
+
 }
