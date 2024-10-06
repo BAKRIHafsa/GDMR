@@ -23,7 +23,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
     @Enumerated(EnumType.STRING)
-    private UserStatus Status = UserStatus.CREATED;
+    private UserStatus status = UserStatus.CREATED;
     private LocalDate dateNaissance;
     @Override
     public String toString() {
@@ -33,7 +33,7 @@ public class User {
                 ", nom='" + nom + '\'' +
                 ", prenom='" + prenom + '\'' +
                 ", role=" + role +
-                ", status=" + Status +
+                ", status=" + status +
                 ", dateNaissance=" + dateNaissance +
                 '}';
     }

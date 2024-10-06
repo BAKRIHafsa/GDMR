@@ -82,7 +82,7 @@ public class UserController {
 
     @GetMapping("/all-collab")
     public ResponseEntity<List<User>> getAllCollaborateurs() {
-        List<User> collaborateurs = userService.getAllCollaborateurs();
+        List<User> collaborateurs = userService.getAllCollaborateursA();
         return ResponseEntity.ok(collaborateurs);
     }
 

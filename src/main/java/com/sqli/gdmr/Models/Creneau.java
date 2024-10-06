@@ -39,8 +39,8 @@ public class Creneau {
     private String motif;
     @Enumerated(EnumType.STRING)
     private StatusVisite statusVisite;
-    private String justifNonValide;// pour le collaborateur qui a pas aimer le crenenau choisi par le rh
-    private String justifAnnuleMedecin;// si le collaborateur n'a pas venu à la visite ou un urgence
+    private String justifNonValide;// pour le collaborateur
+    private String justifAnnuleMedecin;// si le med n'a pas venu à la visite ou un urgence
     private String justifAnnuleCollaborateur; // si le collaborateur est abscent, un empechement
     private LocalDate dateCreation;
 

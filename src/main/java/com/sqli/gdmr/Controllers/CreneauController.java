@@ -52,7 +52,7 @@ public class CreneauController {
 //        return ResponseEntity.status(500).body("Erreur lors de la création du créneau: " + e.getMessage());
 //    }
 //}
-@PostMapping("/create")
+@PostMapping("/creer")
 public ResponseEntity<?> createCreneau(@RequestBody CreneauCreationDTO creneauDTO) {
     creneauService.creerCreneauEtEnvoyerNotifications(creneauDTO);
     return ResponseEntity.ok("Créneau créé avec succès et notifications envoyées.");

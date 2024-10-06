@@ -21,7 +21,9 @@ public class PasswordEncryptionService {
 
         for (User user : users) {
             String currentPassword = user.getPassword();
-
+            if (currentPassword == null || currentPassword.isEmpty()) {
+                continue; // Passer à l'utilisateur suivant
+            }
             // Vérifiez si le mot de passe commence par le préfixe BCrypt
             if (!currentPassword.startsWith("$2a$") && !currentPassword.startsWith("$2b$") && !currentPassword.startsWith("$2y$")) {
                 String encryptedPassword = passwordEncoder.encode(currentPassword);

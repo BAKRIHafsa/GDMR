@@ -2,6 +2,7 @@ package com.sqli.gdmr.Controllers;
 
 import com.sqli.gdmr.Models.Disponibilité;
 import com.sqli.gdmr.Services.DisponibilitéService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/disponibilites")
+@Slf4j
 public class DisponibilitéController {
 
     @Autowired
@@ -20,9 +22,12 @@ public class DisponibilitéController {
     @PostMapping("/ajouter")
     public ResponseEntity<Disponibilité> ajouterDisponibilite(@RequestBody Disponibilité disponibilite) {
         try {
+            log.info("Réception d'une demande d'ajout de disponibilité");
             Disponibilité nouvelleDisponibilite = disponibilitéService.ajouterDisponibilite(disponibilite);
+            log.info("Disponibilité ajoutée avec succès");
             return ResponseEntity.ok(nouvelleDisponibilite);
         } catch (IllegalStateException e) {
+            log.error("Erreur lors de l'ajout de disponibilité: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
         }
     }

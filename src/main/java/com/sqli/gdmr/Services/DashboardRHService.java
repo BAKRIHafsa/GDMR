@@ -71,9 +71,9 @@ public class DashboardRHService {
                 StatusVisite.EN_COURS,
                 StatusVisite.TERMINE,
                 StatusVisite.ANNULE,
-                StatusVisite.NON_VALIDE,
-                StatusVisite.CONFIRME_COLLAB,
-                StatusVisite.CONFIRME_MED
+                StatusVisite.NON_VALIDE
+//                StatusVisite.CONFIRME_COLLAB,
+//                StatusVisite.CONFIRME_MED
         );
 
         // Récupérer toutes les visites
@@ -97,9 +97,9 @@ public class DashboardRHService {
                 StatusVisite.EN_COURS,
                 StatusVisite.TERMINE,
                 StatusVisite.ANNULE,
-                StatusVisite.NON_VALIDE,
-                StatusVisite.CONFIRME_COLLAB,
-                StatusVisite.CONFIRME_MED
+                StatusVisite.NON_VALIDE
+//                StatusVisite.CONFIRME_COLLAB,
+//                StatusVisite.CONFIRME_MED
         );
 
         // Retrieve all visits

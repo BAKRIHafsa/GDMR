@@ -1,12 +1,17 @@
 package com.sqli.gdmr.Services;
 
+import com.sqli.gdmr.DTOs.CreateMedecinRequestDTO;
 import com.sqli.gdmr.DTOs.ModifieCollaborateur;
 import com.sqli.gdmr.DTOs.UserDTO;
 import com.sqli.gdmr.Enums.Role;
 import com.sqli.gdmr.Enums.UserStatus;
 import com.sqli.gdmr.Mappers.ModifieCollaborateurMapper;
+import com.sqli.gdmr.Models.Collaborateur;
+import com.sqli.gdmr.Models.Medecin;
 import com.sqli.gdmr.Models.User;
+import com.sqli.gdmr.Repositories.MedecinRepository;
 import com.sqli.gdmr.Repositories.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -18,14 +23,21 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
+@Transactional
 public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private MedecinRepository medecinRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -298,41 +310,168 @@ public Map<String, List<User>> getActiveAndCreatedCollaborateursAndChargeRH() {
 //        return userRepository.save(user);
 //    }
 
-    public User createUser(User user) {
-        String defaultPassword = "sqli";
-        String encodedPassword = passwordEncoder.encode(defaultPassword);
+//    public User createUser(User user) {
+//        String defaultPassword = "sqli";
+//        String encodedPassword = passwordEncoder.encode(defaultPassword);
+//
+//        user.setPassword(encodedPassword);
+//
+//        user.setStatus(UserStatus.CREATED);
+//
+//        return userRepository.save(user);
+//    }
+public Collaborateur createCollaborateur(Collaborateur collaborateur) {
+    String defaultPassword = "sqli";
+    String encodedPassword = passwordEncoder.encode(defaultPassword);
 
-        user.setPassword(encodedPassword);
+    // Définir le mot de passe encodé pour le collaborateur
+    collaborateur.setPassword(encodedPassword);
 
-        user.setStatus(UserStatus.CREATED);
+    // Définir le statut du collaborateur à 'CREATED'
+    collaborateur.setStatus(UserStatus.CREATED);
 
-        return userRepository.save(user);
+    // Sauvegarder le collaborateur dans la base de données
+    return userRepository.save(collaborateur);
+}
+
+    //    public String activerMedecina(Long id) {
+//        Optional<User> userOpt = userRepository.findById(id);
+//        if (userOpt.isPresent()) {
+//            User user = userOpt.get();
+//            if (user.getStatus() == UserStatus.CREATED) {
+//                user.setStatus(UserStatus.ACTIVE);
+//                userRepository.save(user);
+//                return "Le médecin a été activé avec succès.";
+//            } else {
+//                return "Le médecin est déjà actif.";
+//            }
+//        } else {
+//            return "Médecin non trouvé.";
+//        }
+//    }
+public String activerMedecin(Long id) {
+    // Rechercher l'utilisateur par son ID
+    Optional<User> userOptional = userRepository.findById(id);
+    if (!userOptional.isPresent()) {
+        return "Médecin non trouvé.";
     }
 
-    public String createUser(Long userId) {
-        if (userId == null) {
-            throw new IllegalArgumentException("User ID cannot be null");
-        }
+    User user = userOptional.get();
 
-        Optional<User> existingUser = userRepository.findById(userId);
-
-        if (existingUser.isPresent()) {
-            User user = existingUser.get();
-            if (user.getStatus() == UserStatus.ACTIVE) {
-                return "User is already created";
-            } else{
-                user.setStatus(UserStatus.ACTIVE);
-                userRepository.save(user);
-                return "The user has been successfully created";
-            }
-        } else {
-            User newUser = new User();
-            newUser.setIdUser(userId);
-            newUser.setStatus(UserStatus.ACTIVE);
-            userRepository.save(newUser);
-            return "The user has been successfully created";
-        }
+    // Vérifier si l'utilisateur est un médecin
+    if (!(user instanceof Medecin)) {
+        return "L'utilisateur n'est pas un médecin.";
     }
+
+    // Mettre à jour l'état de l'utilisateur en ACTIF
+    user.setStatus(UserStatus.ACTIVE);
+
+    // Sauvegarder les modifications
+    userRepository.save(user);
+
+    return "Le médecin a été activé avec succès.";
+}
+    public String activerCollaborateur(Long id) {
+        // Rechercher l'utilisateur par son ID
+        Optional<User> userOptional = userRepository.findById(id);
+        if (!userOptional.isPresent()) {
+            return "Collaborateur non trouvé.";
+        }
+
+        User user = userOptional.get();
+
+        // Vérifier si l'utilisateur est un collaborateur ou un chargé RH
+        if (!(user instanceof Collaborateur) && user.getRole() != Role.CHARGE_RH &&  user.getRole() != Role.ADMINISTRATEUR) {
+            return "L'utilisateur n'est ni un collaborateur ni un chargé RH ni Administrateur.";
+        }
+
+        // Mettre à jour l'état de l'utilisateur en ACTIF
+        user.setStatus(UserStatus.ACTIVE);
+
+        // Sauvegarder les modifications
+        userRepository.save(user);
+
+        return "Le collaborateur a été activé avec succès.";
+    }
+
+
+
+
+    //    public String createUser(Long userId) {
+//        if (userId == null) {
+//            throw new IllegalArgumentException("User ID cannot be null");
+//        }
+//
+//        Optional<User> existingUser = userRepository.findById(userId);
+//
+//        if (existingUser.isPresent()) {
+//            User user = existingUser.get();
+//            if (user.getStatus() == UserStatus.ACTIVE) {
+//                return "User is already created";
+//            } else {
+//                user.setStatus(UserStatus.ACTIVE);
+//                userRepository.save(user);
+//
+//                // Créer l'entrée dans la table Medecin
+//                Medecin newMedecin = new Medecin();
+//                newMedecin.setIdUser(user.getIdUser()); // Assurez-vous que votre Medecin a une relation avec User
+//                newMedecin.setSpecialite("Médecin de travail"); // Définir la spécialité
+//                medecinRepository.save(newMedecin); // Enregistrer le médecin
+//
+//                return "The user has been successfully created and assigned as a medecin";
+//            }
+//        } else {
+//            User newUser = new User();
+//            newUser.setIdUser(userId);
+//            newUser.setStatus(UserStatus.ACTIVE);
+//            userRepository.save(newUser);
+//            // Créer l'entrée dans la table Medecin
+//            Medecin newMedecin = new Medecin();
+//            newMedecin.setIdUser(newUser.getIdUser()); // Assurez-vous que votre Medecin a une relation avec User
+//            newMedecin.setSpecialite("Médecin de travail"); // Définir la spécialité
+//            medecinRepository.save(newMedecin); // Enregistrer le médecin
+//
+//            return "The user has been successfully created and assigned as a médecin";
+//        }
+//    }
+    public String createMedecinUser(CreateMedecinRequestDTO request) {
+        // Vérifier les paramètres d'entrée
+        if (request.getNom() == null || request.getPrenom() == null || request.getUsername() == null) {
+            throw new IllegalArgumentException("Nom, prénom, et username ne peuvent pas être vides.");
+        }
+
+        // Vérifier si un utilisateur avec le même nom d'utilisateur existe déjà
+        Optional<User> existingUserWithSameUsername = userRepository.findByUsername(request.getUsername());
+        if (existingUserWithSameUsername.isPresent()) {
+            throw new IllegalArgumentException("Le nom d'utilisateur existe déjà.");
+        }
+
+        // Créer un nouvel objet Medecin (qui hérite de User)
+        Medecin medecin = new Medecin();
+        medecin.setUsername(request.getUsername());
+        medecin.setNom(request.getNom());
+        medecin.setPrenom(request.getPrenom());
+        medecin.setDateNaissance(request.getDateNaissance());
+        medecin.setRole(Role.MEDECIN); // Définir le rôle de médecin
+        medecin.setStatus(UserStatus.CREATED);
+
+        // Définir le mot de passe par défaut encodé
+        String encodedPassword = passwordEncoder.encode("sqli");
+        medecin.setPassword(encodedPassword);
+
+        // Définir les détails spécifiques au médecin
+        medecin.setExperience(request.getExperience());
+        medecin.setQualification(request.getQualification());
+        medecin.setSiteTravail(request.getSiteTravail());
+        medecin.setSpecialite("Médecin de travail"); // Valeur par défaut ou selon le request
+
+        // Sauvegarder le médecin (cela sauvegarde aussi les détails utilisateur)
+        medecinRepository.save(medecin);
+
+        return "Le médecin a été créé avec succès";
+    }
+
+
 
 //    public User updateUser(Long id, User userDetails) {
 //        User user = userRepository.findById(id)
@@ -390,8 +529,29 @@ public Map<String, List<User>> getActiveAndCreatedCollaborateursAndChargeRH() {
         return userRepository.findByRole(Role.COLLABORATEUR);
     }
 
+    public List<User> getAllCollaborateursA() {
+        List<User> collaborateurs = userRepository.findByRoleAndStatus(Role.COLLABORATEUR, UserStatus.ACTIVE);
+        List<User> administrateurs = userRepository.findByRoleAndStatus(Role.ADMINISTRATEUR, UserStatus.ACTIVE);
+        List<User> chargesRH = userRepository.findByRoleAndStatus(Role.CHARGE_RH, UserStatus.ACTIVE);
+
+        return Stream.of(collaborateurs, administrateurs, chargesRH)
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+    }
     public User findById(Long id) {
         return userRepository.findById(id).orElse(null);
+    }
+
+    public Collaborateur findByIdCollab(Long collaborateurId) {
+        // Rechercher l'utilisateur par son ID
+        return userRepository.findById(collaborateurId)
+                .filter(user -> user instanceof Collaborateur) // Vérifier si l'utilisateur est un collaborateur
+                .map(user -> (Collaborateur) user) // Cast l'utilisateur en Collaborateur
+                .orElseThrow(() -> new IllegalArgumentException("Collaborateur non trouvé avec l'ID: " + collaborateurId));
+    }
+
+    public List<Medecin> findMedecinsDisponibles(LocalDate date, LocalTime heuredebut, LocalTime heurefin) {
+        return medecinRepository.findAvailableMedecins(date, heuredebut, heurefin);
     }
 
 }

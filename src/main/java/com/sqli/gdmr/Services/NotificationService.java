@@ -1,6 +1,5 @@
 package com.sqli.gdmr.Services;
 
-import com.sqli.gdmr.Models.CreneauCollaborateur;
 import com.sqli.gdmr.Models.Notification;
 import com.sqli.gdmr.Repositories.NotificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,11 +30,11 @@ public class NotificationService {
             notificationRepository.save(notification);
         }
     }
-    public void sendNotificationsToCollaborateurs(List<CreneauCollaborateur> creneauCollaborateurs) {
-        for (CreneauCollaborateur cc : creneauCollaborateurs) {
-            // Logic to send a notification to the collaborator
-            System.out.println("Notification sent to Collaborateur ID: " + cc.getCollaborateur().getIdUser());
-            // Implement the actual notification logic (e.g., email, SMS, push notification)
-        }
-    }
+//    public void sendNotificationsToCollaborateurs(List<CreneauCollaborateur> creneauCollaborateurs) {
+//        for (CreneauCollaborateur cc : creneauCollaborateurs) {
+//            // Logic to send a notification to the collaborator
+//            System.out.println("Notification sent to Collaborateur ID: " + cc.getCollaborateur().getIdUser());
+//            // Implement the actual notification logic (e.g., email, SMS, push notification)
+//        }
+//    }
 }
