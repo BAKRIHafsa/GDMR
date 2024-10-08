@@ -533,17 +533,17 @@ public String activerMedecin(Long id) {
         return userRepository.findByRole(Role.COLLABORATEUR);
     }
 
-//    public List<User> getAllCollaborateursA() {
-//        List<User> collaborateurs = userRepository.findByRoleAndStatus(Role.COLLABORATEUR, UserStatus.ACTIVE);
-//        List<User> administrateurs = userRepository.findByRoleAndStatus(Role.ADMINISTRATEUR, UserStatus.ACTIVE);
-//        List<User> chargesRH = userRepository.findByRoleAndStatus(Role.CHARGE_RH, UserStatus.ACTIVE);
-//
-//        return Stream.of(collaborateurs, administrateurs, chargesRH)
-//                .flatMap(List::stream)
-//                .collect(Collectors.toList());
-//    }
+    public List<User> getAllCollaborateursA() {
+        List<User> collaborateurs = userRepository.findByRoleAndStatus(Role.COLLABORATEUR, UserStatus.ACTIVE);
+        List<User> administrateurs = userRepository.findByRoleAndStatus(Role.ADMINISTRATEUR, UserStatus.ACTIVE);
+        List<User> chargesRH = userRepository.findByRoleAndStatus(Role.CHARGE_RH, UserStatus.ACTIVE);
 
-    public List<User> getAllCollaborateursA(LocalDate date, LocalTime heureDebut, LocalTime heureFin) {
+        return Stream.of(collaborateurs, administrateurs, chargesRH)
+               .flatMap(List::stream)
+                .collect(Collectors.toList());
+    }
+
+    public List<User> getAllCollaborateursAV(LocalDate date, LocalTime heureDebut, LocalTime heureFin) {
         List<User> collaborateurs = userRepository.findByRoleAndStatus(Role.COLLABORATEUR, UserStatus.ACTIVE);
         List<User> administrateurs = userRepository.findByRoleAndStatus(Role.ADMINISTRATEUR, UserStatus.ACTIVE);
         List<User> chargesRH = userRepository.findByRoleAndStatus(Role.CHARGE_RH, UserStatus.ACTIVE);

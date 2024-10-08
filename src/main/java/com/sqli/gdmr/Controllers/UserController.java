@@ -91,18 +91,18 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
     }
 
-//    @GetMapping("/all-collab")
-//    public ResponseEntity<List<User>> getAllCollaborateurs() {
-//        List<User> collaborateurs = userService.getAllCollaborateursA();
-//        return ResponseEntity.ok(collaborateurs);
-//    }
-@GetMapping("/all-collab")
-public ResponseEntity<List<User>> getAllCollaborateurs(
+    @GetMapping("/all-collab")
+    public ResponseEntity<List<User>> getAllCollaborateursA() {
+        List<User> collaborateurs = userService.getAllCollaborateursA();
+        return ResponseEntity.ok(collaborateurs);
+    }
+@GetMapping("/all-collabAV")
+public ResponseEntity<List<User>> getAllCollaborateursAV(
         @RequestParam LocalDate date,
         @RequestParam LocalTime heureDebut,
         @RequestParam LocalTime heureFin) {
     // Appel au service avec les paramètres de date et heures
-    List<User> collaborateurs = userService.getAllCollaborateursA(date, heureDebut, heureFin);
+    List<User> collaborateurs = userService.getAllCollaborateursAV(date, heureDebut, heureFin);
     return ResponseEntity.ok(collaborateurs);
 }
 
