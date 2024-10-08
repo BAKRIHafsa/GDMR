@@ -1,5 +1,6 @@
 package com.sqli.gdmr.Repositories;
 
+import com.sqli.gdmr.Enums.StatusVisite;
 import com.sqli.gdmr.Models.Creneau;
 import com.sqli.gdmr.Models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,10 @@ import java.util.List;
 @Repository
 public interface CreneauRepository extends JpaRepository<Creneau, Long> {
     List<Creneau> findByCollaborateur_idUser(Long idUser);
+
+    List<Creneau> findByStatusVisite(StatusVisite statusVisite);
+
+    List<Creneau> findAll();
     boolean existsByCollaborateurAndDateAndHeureDebutVisiteLessThanEqualAndHeureFinVisiteGreaterThanEqual(
             User collaborateur, LocalDate date, LocalTime heureFin, LocalTime heureDebut);
 

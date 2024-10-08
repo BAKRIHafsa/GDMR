@@ -208,4 +208,9 @@ public void creerCreneauEtEnvoyerNotifications(CreneauCreationDTO creneauDTO) {
         return List.of();
     }
 
+    public List<Creneau> getAllCreneauxPlanifies() {
+        return creneauRepository.findByStatusVisite(StatusVisite.PLANIFIE);
+    }
+
+
 }

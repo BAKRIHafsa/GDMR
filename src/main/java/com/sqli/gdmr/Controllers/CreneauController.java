@@ -64,6 +64,13 @@ public ResponseEntity<String> createCreneau(@RequestBody CreneauCreationDTO cren
         return ResponseEntity.ok(creneaux);
     }
 
+
+    @GetMapping("/all-visites-planifiées")
+    public ResponseEntity<List<Creneau>> getCreneauxPlanifies() {
+        List<Creneau> creneaux = creneauService.getAllCreneauxPlanifies();
+        return ResponseEntity.ok(creneaux);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Optional<Creneau>> getCreneauById(@PathVariable Long id) {
         Optional<Creneau> creneau = creneauService.getCreneauById(id);
