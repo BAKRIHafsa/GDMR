@@ -16,8 +16,12 @@ public class AntecedantController {
     @GetMapping("/obtenir")
     public ResponseEntity<Antecedant> getAntecedantForCurrentUser() {
         Antecedant antecedant = antecedantService.getAntecedantForCurrentUser();
+        if (antecedant == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
         return new ResponseEntity<>(antecedant, HttpStatus.OK);
     }
+
 
     @PostMapping("/ajouter")
     public ResponseEntity<Antecedant> createAntecedant(@RequestBody Antecedant antecedant) {

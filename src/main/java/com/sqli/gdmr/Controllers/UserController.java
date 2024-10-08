@@ -14,6 +14,8 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.web.bind.annotation.*;
 
 import javax.swing.text.html.Option;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,11 +82,30 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
     }
 
-    @GetMapping("/all-collab")
-    public ResponseEntity<List<User>> getAllCollaborateurs() {
-        List<User> collaborateurs = userService.getAllCollaborateursA();
-        return ResponseEntity.ok(collaborateurs);
+    @GetMapping("/currentUser")
+    public ResponseEntity<User> getCurrentUser() {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser != null) {
+            return ResponseEntity.ok(currentUser);
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
     }
+
+//    @GetMapping("/all-collab")
+//    public ResponseEntity<List<User>> getAllCollaborateurs() {
+//        List<User> collaborateurs = userService.getAllCollaborateursA();
+//        return ResponseEntity.ok(collaborateurs);
+//    }
+@GetMapping("/all-collab")
+public ResponseEntity<List<User>> getAllCollaborateurs(
+        @RequestParam LocalDate date,
+        @RequestParam LocalTime heureDebut,
+        @RequestParam LocalTime heureFin) {
+    // Appel au service avec les paramètres de date et heures
+    List<User> collaborateurs = userService.getAllCollaborateursA(date, heureDebut, heureFin);
+    return ResponseEntity.ok(collaborateurs);
+}
+
 
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {

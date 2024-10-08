@@ -4,11 +4,9 @@ import com.sqli.gdmr.DTOs.CreneauCreationDTO;
 import com.sqli.gdmr.Enums.Role;
 import com.sqli.gdmr.Enums.StatusVisite;
 import com.sqli.gdmr.Mappers.CreneauCreationMapper;
-import com.sqli.gdmr.Models.Collaborateur;
-import com.sqli.gdmr.Models.Creneau;
-import com.sqli.gdmr.Models.Notification;
-import com.sqli.gdmr.Models.User;
+import com.sqli.gdmr.Models.*;
 import com.sqli.gdmr.Repositories.CreneauRepository;
+import com.sqli.gdmr.Repositories.MedecinRepository;
 import com.sqli.gdmr.Repositories.NotificationRepository;
 import com.sqli.gdmr.Repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +22,10 @@ public class CreneauService {
 
     @Autowired
     private CreneauRepository creneauRepository;
+
+    @Autowired
+    private MedecinRepository medecinRepository;
+
 
     @Autowired
     private DisponibilitéService disponibilitéService;
@@ -88,6 +90,20 @@ public void creerCreneauEtEnvoyerNotifications(CreneauCreationDTO creneauDTO) {
     creneau.setDateCreation(LocalDate.now());
     creneau.setStatusVisite(StatusVisite.EN_ATTENTE_VALIDATION);
 
+    List<Medecin> medecinsDisponibles = medecinRepository.findAvailableMedecins(
+            creneau.getDate(),
+            creneau.getHeureDebutVisite(),
+            creneau.getHeureFinVisite()
+    );
+
+    if (medecinsDisponibles.isEmpty()) {
+        // Gérer le cas où aucun médecin n'est disponible
+        throw new IllegalArgumentException("Le créneau sélectionné n'est plus disponible chez aucun médecin.");
+    }
+
+    Medecin medecinSelectionne = medecinsDisponibles.get(0); // Vous pouvez affiner la logique si nécessaire
+    creneau.setMedecin(medecinSelectionne);
+
     // Vérifier si le créneau est disponible pour au moins un médecin
     boolean isAvailable = disponibilitéService.isCreneauAvailable(
             creneau.getDate(),
@@ -101,11 +117,25 @@ public void creerCreneauEtEnvoyerNotifications(CreneauCreationDTO creneauDTO) {
     }
 
     // Associer le collaborateur au créneau
-    if (creneauDTO.getCollaborateurId() == null) {
-        throw new IllegalArgumentException("L'ID du collaborateur ne doit pas être nul.");
+    User userCollaborateur = userService.findById(creneauDTO.getCollaborateurId());
+    if (userCollaborateur == null) {
+        throw new IllegalArgumentException("Collaborateur non trouvé");
     }
-    User collaborateur = userService.findById(creneauDTO.getCollaborateurId());
-    creneau.setCollaborateur((Collaborateur) collaborateur); // Associer le collaborateur au créneau
+
+
+    if (!(userCollaborateur instanceof Collaborateur)) {
+        throw new IllegalArgumentException("L'utilisateur spécifié n'est pas un collaborateur.");
+    }
+    Collaborateur collaborateur = (Collaborateur) userCollaborateur;
+    creneau.setCollaborateur(collaborateur);
+
+    // Associer le chargé RH au créneau
+    User currentUser = userService.getCurrentUser(); // Use a method to get the current authenticated user
+    if (currentUser == null || currentUser.getRole() != Role.CHARGE_RH) {
+        throw new IllegalArgumentException("L'utilisateur actuellement authentifié n'est pas un chargé RH.");
+    }
+
+    creneau.setChargeRh(currentUser);
 
     // Sauvegarder le créneau
     creneauRepository.save(creneau);
@@ -114,10 +144,12 @@ public void creerCreneauEtEnvoyerNotifications(CreneauCreationDTO creneauDTO) {
     Notification notification = new Notification();
     notification.setDestinataire(collaborateur);
     notification.setDateEnvoi(LocalDateTime.now());
-    notification.setMessage("Un créneau a été créé. Veuillez confirmer votre visite avant le " +
+    notification.setMessage("Un créneau a été créé par " + currentUser.getNom() +
+            ". Veuillez confirmer votre visite avant le " +
             LocalDate.now().plusDays(2) + " à minuit.");
     notificationRepository.save(notification);
 }
+
 
 
     public Creneau saveCreneau(Creneau creneau) {

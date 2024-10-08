@@ -31,9 +31,10 @@ public class CreneauCreationMapper {
         creneau.setDateCreation(creneauCreationDTO.getDateCreation());
         creneau.setStatusVisite(StatusVisite.EN_ATTENTE_VALIDATION);
 
-        // Récupérer et associer le collaborateur à partir de l'ID
+
         Collaborateur collaborateur = userService.findByIdCollab(creneauCreationDTO.getCollaborateurId());
-        creneau.setCollaborateur(collaborateur); // Associer le collaborateur au créneau
+        creneau.setCollaborateur(collaborateur);
+
 
         return creneau;
     }

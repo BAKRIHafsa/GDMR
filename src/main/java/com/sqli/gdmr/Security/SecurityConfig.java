@@ -70,6 +70,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasAuthority("ADMINISTRATEUR")//permitAll()
                         .requestMatchers("/api/chargéRH/**").hasAuthority("CHARGE_RH")//permitAll()
                         .requestMatchers("/api/collab/**").hasAnyAuthority("COLLABORATEUR", "CHARGE_RH", "ADMINISTRATEUR")
+                        .requestMatchers("/api/med/disponibles").hasAuthority("CHARGE_RH")
                         .requestMatchers("/api/med/**").hasAuthority("MEDECIN")
                         .requestMatchers("/api/disponibilites/medecin/**").hasAnyAuthority("CHARGE_RH", "MEDECIN")
                         .requestMatchers("/api/creneaux/**").hasAuthority("CHARGE_RH")

@@ -6,7 +6,9 @@ import com.sqli.gdmr.Models.User;
 import com.sqli.gdmr.Repositories.AntecedantRepository;
 import com.sqli.gdmr.Repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class AntecedantService {
@@ -19,14 +21,16 @@ public class AntecedantService {
     private UserService userService;
 
     public Antecedant getAntecedantForCurrentUser() {
-        User currentUser = userService.getCurrentUser(); // Récupérer l'utilisateur connecté
-        if (currentUser != null && currentUser instanceof Collaborateur) {
-            Collaborateur currentCollaborateur = (Collaborateur) currentUser; // Récupérer le collaborateur
-            return antecedantRepository.findByCollaborateur(currentCollaborateur)
-                    .orElseThrow(() -> new RuntimeException("Antecedant not found for the current collaborator"));
+        User currentUser = userService.getCurrentUser();
+        if (currentUser instanceof Collaborateur) {
+            Collaborateur collaborateur = (Collaborateur) currentUser;
+            return antecedantRepository.findByCollaborateur(collaborateur)
+                    .orElse(null); // Return null if not found
         }
-        throw new RuntimeException("Current user is not associated with any collaborator");
+        return null;
     }
+
+
 
 
 

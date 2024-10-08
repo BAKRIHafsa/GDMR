@@ -9,6 +9,7 @@ import com.sqli.gdmr.Mappers.ModifieCollaborateurMapper;
 import com.sqli.gdmr.Models.Collaborateur;
 import com.sqli.gdmr.Models.Medecin;
 import com.sqli.gdmr.Models.User;
+import com.sqli.gdmr.Repositories.CreneauRepository;
 import com.sqli.gdmr.Repositories.MedecinRepository;
 import com.sqli.gdmr.Repositories.UserRepository;
 import jakarta.transaction.Transactional;
@@ -38,6 +39,9 @@ public class UserService {
 
     @Autowired
     private MedecinRepository medecinRepository;
+
+    @Autowired
+    private CreneauRepository creneauRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -529,15 +533,35 @@ public String activerMedecin(Long id) {
         return userRepository.findByRole(Role.COLLABORATEUR);
     }
 
-    public List<User> getAllCollaborateursA() {
+//    public List<User> getAllCollaborateursA() {
+//        List<User> collaborateurs = userRepository.findByRoleAndStatus(Role.COLLABORATEUR, UserStatus.ACTIVE);
+//        List<User> administrateurs = userRepository.findByRoleAndStatus(Role.ADMINISTRATEUR, UserStatus.ACTIVE);
+//        List<User> chargesRH = userRepository.findByRoleAndStatus(Role.CHARGE_RH, UserStatus.ACTIVE);
+//
+//        return Stream.of(collaborateurs, administrateurs, chargesRH)
+//                .flatMap(List::stream)
+//                .collect(Collectors.toList());
+//    }
+
+    public List<User> getAllCollaborateursA(LocalDate date, LocalTime heureDebut, LocalTime heureFin) {
         List<User> collaborateurs = userRepository.findByRoleAndStatus(Role.COLLABORATEUR, UserStatus.ACTIVE);
         List<User> administrateurs = userRepository.findByRoleAndStatus(Role.ADMINISTRATEUR, UserStatus.ACTIVE);
         List<User> chargesRH = userRepository.findByRoleAndStatus(Role.CHARGE_RH, UserStatus.ACTIVE);
 
-        return Stream.of(collaborateurs, administrateurs, chargesRH)
+        List<User> allUsers = Stream.of(collaborateurs, administrateurs, chargesRH)
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
+
+        return allUsers.stream()
+                .filter(user -> !hasVisiteInCreneau(user, date, heureDebut, heureFin))
+                .collect(Collectors.toList());
     }
+
+    private boolean hasVisiteInCreneau(User user, LocalDate date, LocalTime heureDebut, LocalTime heureFin) {
+        return creneauRepository.existsByCollaborateurAndDateAndHeureDebutVisiteLessThanEqualAndHeureFinVisiteGreaterThanEqual(
+                user, date, heureFin, heureDebut);
+    }
+
     public User findById(Long id) {
         return userRepository.findById(id).orElse(null);
     }
@@ -548,6 +572,13 @@ public String activerMedecin(Long id) {
                 .filter(user -> user instanceof Collaborateur) // Vérifier si l'utilisateur est un collaborateur
                 .map(user -> (Collaborateur) user) // Cast l'utilisateur en Collaborateur
                 .orElseThrow(() -> new IllegalArgumentException("Collaborateur non trouvé avec l'ID: " + collaborateurId));
+    }
+
+    public User findByIdChargeRh(Long chargeRhId) {
+        // Rechercher l'utilisateur par son ID
+        return userRepository.findById(chargeRhId)
+                .filter(user -> user.getRole()==Role.CHARGE_RH) // Vérifier si l'utilisateur est un collaborateur
+                .orElseThrow(() -> new IllegalArgumentException("Collaborateur non trouvé avec l'ID: " + chargeRhId));
     }
 
     public List<Medecin> findMedecinsDisponibles(LocalDate date, LocalTime heuredebut, LocalTime heurefin) {

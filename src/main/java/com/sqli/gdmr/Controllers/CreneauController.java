@@ -53,12 +53,10 @@ public class CreneauController {
 //    }
 //}
 @PostMapping("/creer")
-public ResponseEntity<?> createCreneau(@RequestBody CreneauCreationDTO creneauDTO) {
+public ResponseEntity<String> createCreneau(@RequestBody CreneauCreationDTO creneauDTO) {
     creneauService.creerCreneauEtEnvoyerNotifications(creneauDTO);
-    return ResponseEntity.ok("Créneau créé avec succès et notifications envoyées.");
+    return ResponseEntity.ok("Créneau créé avec succès et notifications envoyées."); // Return plain text
 }
-
-
 
     @GetMapping("/affiche")
     public ResponseEntity<List<Creneau>> getCreneaux() {

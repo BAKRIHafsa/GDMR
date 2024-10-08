@@ -19,6 +19,5 @@ public class CreneauCreationDTO {
     private String typeVisite;
     @NotNull
     private Long collaborateurId;
-    @NotNull
     private LocalDate dateCreation;
 }
