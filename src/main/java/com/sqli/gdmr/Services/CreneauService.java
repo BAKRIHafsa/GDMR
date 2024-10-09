@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
@@ -145,7 +146,7 @@ public void creerCreneauEtEnvoyerNotifications(CreneauCreationDTO creneauDTO) {
     notification.setDestinataire(collaborateur);
     notification.setDateEnvoi(LocalDateTime.now());
     notification.setMessage("Un créneau a été créé par " + currentUser.getNom() +
-            ". Veuillez confirmer votre visite avant le " +
+            ". Veuillez consulter le calendrier pour confirmer votre visite avant le " +
             LocalDate.now().plusDays(2) + " à minuit.");
     notificationRepository.save(notification);
 }
@@ -212,5 +213,33 @@ public void creerCreneauEtEnvoyerNotifications(CreneauCreationDTO creneauDTO) {
         return creneauRepository.findByStatusVisite(StatusVisite.PLANIFIE);
     }
 
+    public boolean validerCreneau(Long id) throws Exception {
+        Creneau creneau = creneauRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Créneau introuvable"));
 
+        // Log de l'état actuel du créneau
+        System.out.println("État actuel du créneau : " + creneau.getStatusVisite());
+
+        if (!creneau.getStatusVisite().equals(StatusVisite.EN_ATTENTE_VALIDATION)) {
+            throw new Exception("Le créneau n'est pas en attente de validation.");
+        }
+
+        creneau.setStatusVisite(StatusVisite.VALIDE);
+        creneauRepository.save(creneau);
+        return true; // Assurez-vous de renvoyer true après la validation réussie
+    }
+
+
+
+    public boolean nonValiderCreneau(Long id, String justification) throws Exception {
+        Creneau creneau = creneauRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Créneau introuvable"));
+        if (!creneau.getStatusVisite().equals(StatusVisite.EN_ATTENTE_VALIDATION)) {
+            throw new Exception("Le créneau n'est pas en attente de validation.");
+        }
+        creneau.setStatusVisite(StatusVisite.NON_VALIDE);
+        creneau.setJustifAnnuleCollaborateur(justification);
+        creneauRepository.save(creneau);
+        return true;
+
+    }
 }

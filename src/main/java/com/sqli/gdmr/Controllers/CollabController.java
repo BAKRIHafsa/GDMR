@@ -6,12 +6,11 @@ import com.sqli.gdmr.Services.CreneauService;
 import com.sqli.gdmr.Services.DashboardRHService;
 import com.sqli.gdmr.Services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/collab")
@@ -46,4 +45,52 @@ public class CollabController {
         List<Creneau> creneaux = creneauService.getAllCreneauxCollab();
         return ResponseEntity.ok(creneaux);
     }
+
+    @PostMapping("/{id}/valider")
+    public ResponseEntity<Map<String, String>> validerCreneau(@PathVariable Long id) {
+        Map<String, String> response = new HashMap<>();
+
+        try {
+            boolean isValide = creneauService.validerCreneau(id);
+            System.out.println("Validation du créneau: " + isValide); // Log pour voir le résultat de la validation
+
+            if (isValide) {
+                response.put("message", "Le créneau a été validé avec succès.");
+                return ResponseEntity.ok(response);  // Renvoie une réponse JSON
+            } else {
+                response.put("message", "Le créneau n'a pas pu être validé.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);  // Renvoie une réponse JSON
+            }
+        } catch (NoSuchElementException e) {
+            response.put("message", "Creneau non trouvé.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (Exception e) {
+            e.printStackTrace(); // Log de l'exception pour débogage
+            response.put("message", "Erreur lors de la validation du créneau.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+
+
+    // Non-valider le créneau avec justification
+    @PostMapping("/{id}/non-valider")
+    public ResponseEntity<?> nonValiderCreneau(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> requestBody
+    ) {
+        String justification = requestBody.get("justification");
+
+        try {
+            creneauService.nonValiderCreneau(id, justification);
+            System.out.println("Creneau non validé avec succès");
+            // Retournez un JSON explicite plutôt qu'une simple chaîne
+            return ResponseEntity.ok().body(Collections.singletonMap("message", "Le créneau a été non validé avec succès."));
+        } catch (Exception e) {
+            e.printStackTrace();  // Ajoutez ce log pour voir le message d'erreur
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Erreur lors de la non-validation du créneau."));
+        }
+    }
+
 }

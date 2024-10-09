@@ -1,6 +1,7 @@
 package com.sqli.gdmr.Services;
 
 import com.sqli.gdmr.Models.Notification;
+import com.sqli.gdmr.Models.User;
 import com.sqli.gdmr.Repositories.NotificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,12 +15,25 @@ public class NotificationService {
     @Autowired
     private NotificationRepository notificationRepository;
 
+    @Autowired
+    private UserService userService;
+
     public void saveNotification(Notification notification) {
         notificationRepository.save(notification);
     }
 
-    public Long getUnreadNotificationsCount(Long userId) {
-        return notificationRepository.countByDestinataireIdUserAndLuFalse(userId);
+    public Long getUnreadNotificationsCount() {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser != null) {
+            Long userId = currentUser.getIdUser();
+            return notificationRepository.countByDestinataireIdUserAndLuFalse(userId);
+        }
+        throw new IllegalStateException("Utilisateur non authentifié ou non trouvé.");
+    }
+
+    public List<Notification> getAllNotificationsForCurrentUser() {
+        User currentUser = userService.getCurrentUser();
+        return notificationRepository.findByDestinataireIdUser(currentUser.getIdUser());
     }
 
     public void markAsRead(Long notificationId) {

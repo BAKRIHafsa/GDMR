@@ -91,5 +91,30 @@ public ResponseEntity<String> createCreneau(@RequestBody CreneauCreationDTO cren
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(message);
         }
     }
+
+    @PostMapping("/{id}/valider")
+    public ResponseEntity<?> validerCreneau(@PathVariable Long id) {
+        try {
+            creneauService.validerCreneau(id);
+            return ResponseEntity.ok().body("Le créneau a été validé avec succès.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de la validation du créneau.");
+        }
+    }
+
+    @PostMapping("/{id}/non-valider")
+    public ResponseEntity<?> nonValiderCreneau(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> requestBody
+    ) {
+        String justification = requestBody.get("justification");
+
+        try {
+            creneauService.nonValiderCreneau(id, justification);
+            return ResponseEntity.ok().body("Le créneau a été non validé avec succès.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de la non-validation du créneau.");
+        }
+    }
 }
 
