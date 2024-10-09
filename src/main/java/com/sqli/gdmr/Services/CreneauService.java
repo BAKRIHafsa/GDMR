@@ -303,7 +303,9 @@ public void creerCreneauEtEnvoyerNotifications(CreneauCreationDTO creneauDTO) {
 //        return savedCreneau;
 //    }
 public Creneau creerVisiteSpontanee(CreneauRequestDTO request, List<MultipartFile> fichiers) throws IOException {
-    User currentUser = userService.getCurrentUser();
+    User currentUser = userService.getCurrentUser(); // Récupérer l'utilisateur actuel (collaborateur)
+
+    // Créer un nouvel objet Creneau
     Creneau creneau = new Creneau();
     creneau.setMotif(request.getMotif());
     creneau.setTypeVisite(TypesVisite.VISITE_SPONTANEE);
@@ -313,11 +315,13 @@ public Creneau creerVisiteSpontanee(CreneauRequestDTO request, List<MultipartFil
     collaborateur.setIdUser(currentUser.getIdUser());
     creneau.setCollaborateur(collaborateur);
 
+    // Sauvegarder le créneau
     Creneau savedCreneau = creneauRepository.save(creneau);
 
+    // Sauvegarder les fichiers, si fournis
     if (fichiers != null && !fichiers.isEmpty()) {
         for (MultipartFile fichier : fichiers) {
-            if (fichier != null && !fichier.isEmpty()) { // Vérifiez également si le fichier n'est pas vide
+            if (fichier != null && !fichier.isEmpty()) {
                 String cheminFichier = fileStorageService.sauvegarderFichier(fichier);
 
                 Document document = new Document();
@@ -331,8 +335,11 @@ public Creneau creerVisiteSpontanee(CreneauRequestDTO request, List<MultipartFil
         }
     }
 
+    notifyChargeRH(currentUser);
+
     return savedCreneau;
 }
+
 
 
     public void notifyChargeRH(User currentUser) {
