@@ -1,5 +1,6 @@
 package com.sqli.gdmr.Controllers;
 
+import com.sqli.gdmr.DTOs.CreneauRequestDTO;
 import com.sqli.gdmr.DTOs.DashboardRHDTO;
 import com.sqli.gdmr.Models.Creneau;
 import com.sqli.gdmr.Services.CreneauService;
@@ -9,7 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.*;
 
 @RestController
@@ -22,6 +27,7 @@ public class CollabController {
 
     @Autowired
     private CreneauService creneauService;
+
     @GetMapping("/planned-today-count")
     public ResponseEntity<Long> getPlannedVisitsCountForTodayCollab() {
         long count = dashboardRHService.countPlannedVisitsForTodayCollab();
@@ -93,4 +99,24 @@ public class CollabController {
         }
     }
 
+    @PostMapping("/creer-visite-spontanee")
+    public ResponseEntity<Creneau> creerVisiteSpontanee(
+            @RequestParam("motif") String motif,
+            @RequestParam(value = "fichiers", required = false) List<MultipartFile> fichiers // Rendre ce paramètre optionnel
+    ) {
+        CreneauRequestDTO request = new CreneauRequestDTO();
+        request.setMotif(motif);
+        try {
+            Creneau creneau = creneauService.creerVisiteSpontanee(request, fichiers);
+            return new ResponseEntity<>(creneau, HttpStatus.CREATED);
+        } catch (IOException e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+
 }
+
+

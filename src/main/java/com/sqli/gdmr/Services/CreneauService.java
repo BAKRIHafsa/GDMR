@@ -1,19 +1,24 @@
 package com.sqli.gdmr.Services;
+import java.io.IOException;
+import java.util.List;
+
+import com.sqli.gdmr.Repositories.*;
+import org.springframework.web.multipart.MultipartFile;
+
 
 import com.sqli.gdmr.DTOs.CreneauCreationDTO;
+import com.sqli.gdmr.DTOs.CreneauRequestDTO;
 import com.sqli.gdmr.Enums.Role;
 import com.sqli.gdmr.Enums.StatusVisite;
+import com.sqli.gdmr.Enums.TypesVisite;
 import com.sqli.gdmr.Mappers.CreneauCreationMapper;
 import com.sqli.gdmr.Models.*;
-import com.sqli.gdmr.Repositories.CreneauRepository;
-import com.sqli.gdmr.Repositories.MedecinRepository;
-import com.sqli.gdmr.Repositories.NotificationRepository;
-import com.sqli.gdmr.Repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -25,8 +30,13 @@ public class CreneauService {
     private CreneauRepository creneauRepository;
 
     @Autowired
+    private DocumentRepository documentRepository;
+
+    @Autowired
     private MedecinRepository medecinRepository;
 
+    @Autowired
+    private FileStorageService fileStorageService;
 
     @Autowired
     private DisponibilitéService disponibilitéService;
@@ -266,4 +276,81 @@ public void creerCreneauEtEnvoyerNotifications(CreneauCreationDTO creneauDTO) {
         return true;
     }
 
+//    public Creneau creerVisiteSpontanee(CreneauRequestDTO request) {
+//        // Récupérer l'utilisateur authentifié (collaborateur)
+//        User currentUser = userService.getCurrentUser();
+//
+//        // Création d'un nouvel objet Creneau
+//        Creneau creneau = new Creneau();
+//
+//        // Configuration des propriétés du Creneau
+//        creneau.setDate(LocalDate.now()); // Date de la visite
+//        creneau.setMotif(request.getMotif()); // Motif de la visite
+//        creneau.setTypeVisite(TypesVisite.VISITE_SPONTANEE); // Type de visite : "visite spontanée"
+//        creneau.setStatusVisite(StatusVisite.EN_ATTENTE_CREATION_CRENEAU); // Statut de la visite
+//
+//        // Lier le collaborateur actuel au creneau
+//        Collaborateur collaborateur = new Collaborateur();
+//        collaborateur.setIdUser(currentUser.getIdUser());
+//        creneau.setCollaborateur(collaborateur);
+//
+//        // Enregistrement du creneau dans la base de données
+//        Creneau savedCreneau = creneauRepository.save(creneau);
+//
+//        // Notifier tous les chargés RH
+//        notifyChargeRH(currentUser);
+//
+//        return savedCreneau;
+//    }
+public Creneau creerVisiteSpontanee(CreneauRequestDTO request, List<MultipartFile> fichiers) throws IOException {
+    User currentUser = userService.getCurrentUser();
+    Creneau creneau = new Creneau();
+    creneau.setMotif(request.getMotif());
+    creneau.setTypeVisite(TypesVisite.VISITE_SPONTANEE);
+    creneau.setStatusVisite(StatusVisite.EN_ATTENTE_CREATION_CRENEAU);
+
+    Collaborateur collaborateur = new Collaborateur();
+    collaborateur.setIdUser(currentUser.getIdUser());
+    creneau.setCollaborateur(collaborateur);
+
+    Creneau savedCreneau = creneauRepository.save(creneau);
+
+    if (fichiers != null && !fichiers.isEmpty()) {
+        for (MultipartFile fichier : fichiers) {
+            if (fichier != null && !fichier.isEmpty()) { // Vérifiez également si le fichier n'est pas vide
+                String cheminFichier = fileStorageService.sauvegarderFichier(fichier);
+
+                Document document = new Document();
+                document.setNomFichier(fichier.getOriginalFilename());
+                document.setTypeFichier(fichier.getContentType());
+                document.setTailleFichier(fichier.getSize());
+                document.setCheminFichier(cheminFichier);
+                document.setCreneau(savedCreneau);
+                documentRepository.save(document);
+            }
+        }
+    }
+
+    return savedCreneau;
+}
+
+
+    public void notifyChargeRH(User currentUser) {
+        // Récupérer tous les utilisateurs avec le rôle de "Chargé RH"
+        List<User> chargeRHList = userRepository.findByRole(Role.CHARGE_RH);
+
+        // Créer une notification pour chaque chargé RH
+        String message = "Le collaborateur " + currentUser.getNom() + " " + currentUser.getPrenom() +
+                " a demandé une visite spontanée. Veuillez lui créer un créneau horaire.";
+
+        for (User chargeRH : chargeRHList) {
+            Notification notification = new Notification();
+            notification.setMessage(message);
+            notification.setDateEnvoi(LocalDateTime.now());
+            notification.setDestinataire(chargeRH); // Associer la notification à ce chargé RH
+
+            // Enregistrer la notification
+            notificationRepository.save(notification);
+        }
+    }
 }
