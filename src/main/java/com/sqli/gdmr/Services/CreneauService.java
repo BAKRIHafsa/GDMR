@@ -217,29 +217,53 @@ public void creerCreneauEtEnvoyerNotifications(CreneauCreationDTO creneauDTO) {
         Creneau creneau = creneauRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Créneau introuvable"));
 
-        // Log de l'état actuel du créneau
-        System.out.println("État actuel du créneau : " + creneau.getStatusVisite());
-
+        // Vérifiez l'état du créneau
         if (!creneau.getStatusVisite().equals(StatusVisite.EN_ATTENTE_VALIDATION)) {
             throw new Exception("Le créneau n'est pas en attente de validation.");
         }
 
+        // Modifier l'état du créneau
         creneau.setStatusVisite(StatusVisite.VALIDE);
         creneauRepository.save(creneau);
-        return true; // Assurez-vous de renvoyer true après la validation réussie
+
+        // Récupérer le Chargé RH à partir du créneau
+        User chargeRH = creneau.getChargeRh();
+
+        if (chargeRH != null) {
+            // Envoyer une notification au Chargé RH
+            notificationService.sendNotification(chargeRH, "Le créneau " + creneau.getIdCréneau() + " a été validé.");
+        } else {
+            throw new Exception("Aucun Chargé RH assigné à ce créneau.");
+        }
+
+        return true;
     }
 
-
-
     public boolean nonValiderCreneau(Long id, String justification) throws Exception {
-        Creneau creneau = creneauRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Créneau introuvable"));
+        Creneau creneau = creneauRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Créneau introuvable"));
+
+        // Vérifiez l'état du créneau
         if (!creneau.getStatusVisite().equals(StatusVisite.EN_ATTENTE_VALIDATION)) {
             throw new Exception("Le créneau n'est pas en attente de validation.");
         }
-        creneau.setStatusVisite(StatusVisite.NON_VALIDE);
-        creneau.setJustifAnnuleCollaborateur(justification);
-        creneauRepository.save(creneau);
-        return true;
 
+        // Modifier l'état du créneau et ajouter la justification
+        creneau.setStatusVisite(StatusVisite.NON_VALIDE);
+        creneau.setJustifNonValide(justification);
+        creneauRepository.save(creneau);
+
+        // Récupérer le Chargé RH à partir du créneau
+        User chargeRH = creneau.getChargeRh();
+
+        if (chargeRH != null) {
+            // Envoyer une notification au Chargé RH
+            notificationService.sendNotification(chargeRH, "Le créneau " + creneau.getIdCréneau() + " n'a pas été validé. Justification : " + justification);
+        } else {
+            throw new Exception("Aucun Chargé RH assigné à ce créneau.");
+        }
+
+        return true;
     }
+
 }

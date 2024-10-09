@@ -58,7 +58,7 @@ public Map<String, String> login(@RequestBody LoginRequest loginRequest) {
 
     JwtClaimsSet jwtClaimsSet = JwtClaimsSet.builder()
             .issuedAt(instant)
-            .expiresAt(instant.plus(30, ChronoUnit.MINUTES))
+            .expiresAt(instant.plus(60, ChronoUnit.MINUTES))
             .subject(username)
             .claim("scope", scope)
             .claim("userId", user.getIdUser())

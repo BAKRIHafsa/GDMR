@@ -6,6 +6,7 @@ import com.sqli.gdmr.Repositories.NotificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,6 +45,14 @@ public class NotificationService {
             notificationRepository.save(notification);
         }
     }
+    public void sendNotification(User destinataire, String message) {
+        Notification notification = new Notification();
+        notification.setDestinataire(destinataire);
+        notification.setMessage(message);
+        notification.setDateEnvoi(LocalDateTime.now());
+        notificationRepository.save(notification);
+    }
+
 //    public void sendNotificationsToCollaborateurs(List<CreneauCollaborateur> creneauCollaborateurs) {
 //        for (CreneauCollaborateur cc : creneauCollaborateurs) {
 //            // Logic to send a notification to the collaborator
