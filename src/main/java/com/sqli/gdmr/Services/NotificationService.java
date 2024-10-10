@@ -49,6 +49,7 @@ public class NotificationService {
         Notification notification = new Notification();
         notification.setDestinataire(destinataire);
         notification.setMessage(message);
+        notification.setLu(false); // Initialement, la notification n'est pas lue
         notification.setDateEnvoi(LocalDateTime.now());
         notificationRepository.save(notification);
     }

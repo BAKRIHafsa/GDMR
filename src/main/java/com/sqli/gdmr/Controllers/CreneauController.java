@@ -1,15 +1,21 @@
 package com.sqli.gdmr.Controllers;
 
 import com.sqli.gdmr.DTOs.CreneauCreationDTO;
+import com.sqli.gdmr.Enums.StatusVisite;
 import com.sqli.gdmr.Mappers.CreneauCreationMapper;
 import com.sqli.gdmr.Models.Creneau;
 import com.sqli.gdmr.Services.CreneauService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import javax.validation.Valid;
 
+
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +63,35 @@ public ResponseEntity<String> createCreneau(@RequestBody CreneauCreationDTO cren
     creneauService.creerCreneauEtEnvoyerNotifications(creneauDTO);
     return ResponseEntity.ok("Créneau créé avec succès et notifications envoyées."); // Return plain text
 }
+
+    @PutMapping("/visites-spontanees/{collaborateurId}")
+    public ResponseEntity<Void> mettreAJourCreneauVisiteSpontanee(
+            @PathVariable Long collaborateurId,
+            @Valid @RequestBody CreneauCreationDTO creneauCreationDTO) {
+        creneauService.mettreAJourCreneauVisiteSpontanee(collaborateurId, creneauCreationDTO);
+        return ResponseEntity.ok().build();
+    }
+
+
+
+    @PostMapping("/planifier-visite-spontanee/{id}")
+    public ResponseEntity<Creneau> planifierVisiteSpontanee(
+            @PathVariable Long id,
+            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam("heureDebut") @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime heureDebut,
+            @RequestParam("heureFin") @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime heureFin) {
+
+        Creneau creneau = creneauService.planifierVisiteSpontanee(id, date, heureDebut, heureFin);
+        return new ResponseEntity<>(creneau, HttpStatus.OK);
+    }
+
+    @PutMapping("/{id}/statut")
+    public ResponseEntity<Creneau> modifierStatutCreneau(@PathVariable Long id, @RequestBody Map<String, String> statutMap) {
+        String nouveauStatut = statutMap.get("statut");
+        Creneau creneau = creneauService.modifierStatutCreneau(id, StatusVisite.valueOf(nouveauStatut.toUpperCase()));
+        return ResponseEntity.ok(creneau);
+    }
+
 
     @GetMapping("/affiche")
     public ResponseEntity<List<Creneau>> getCreneaux() {

@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.util.List;
 
 import com.sqli.gdmr.Repositories.*;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.web.multipart.MultipartFile;
 
 
@@ -160,6 +161,95 @@ public void creerCreneauEtEnvoyerNotifications(CreneauCreationDTO creneauDTO) {
             LocalDate.now().plusDays(2) + " à minuit.");
     notificationRepository.save(notification);
 }
+    public void mettreAJourCreneauVisiteSpontanee(Long collaborateurId, CreneauCreationDTO creneauCreationDTO) {
+        // Rechercher un créneau existant pour le collaborateur avec une visite spontanée et le statut en attente de création
+        Creneau creneau = creneauRepository.findByCollaborateurAndTypes(
+                collaborateurId,
+                TypesVisite.VISITE_SPONTANEE,
+                StatusVisite.EN_ATTENTE_CREATION_CRENEAU
+        ).orElseThrow(() -> new EntityNotFoundException("Aucun créneau de visite spontanée en attente de création trouvé pour ce collaborateur"));
+
+        // Mettre à jour les champs nécessaires (date, heure début, heure fin)
+        creneau.setDate(creneauCreationDTO.getDate());
+        creneau.setHeureDebutVisite(creneauCreationDTO.getHeureDebutVisite());
+        creneau.setHeureFinVisite(creneauCreationDTO.getHeureFinVisite());
+
+        // Trouver des médecins disponibles pour la plage horaire et la date données
+        List<Medecin> medecinsDisponibles = medecinRepository.findAvailableMedecins(
+                creneau.getDate(),
+                creneau.getHeureDebutVisite(),
+                creneau.getHeureFinVisite()
+        );
+
+        // Vérifier la disponibilité des médecins
+        if (medecinsDisponibles.isEmpty()) {
+            throw new IllegalArgumentException("Le créneau sélectionné n'est plus disponible chez aucun médecin.");
+        }
+
+        // Sélectionner le premier médecin disponible (peut être amélioré pour une meilleure sélection)
+        Medecin medecinSelectionne = medecinsDisponibles.get(0);
+        creneau.setMedecin(medecinSelectionne);
+
+        // Vérifier si le créneau est toujours disponible
+        boolean isAvailable = disponibilitéService.isCreneauAvailable(
+                creneau.getDate(),
+                creneau.getHeureDebutVisite(),
+                creneau.getHeureFinVisite()
+        );
+
+        if (!isAvailable) {
+            throw new IllegalArgumentException("Le créneau sélectionné n'est plus disponible chez aucun médecin.");
+        }
+
+        // Associer le chargé RH (utilisateur actuellement authentifié)
+        User chargeRH = userService.getCurrentUser();
+        if (chargeRH == null || chargeRH.getRole() != Role.CHARGE_RH) {
+            throw new IllegalArgumentException("L'utilisateur authentifié n'est pas un chargé RH.");
+        }
+        creneau.setChargeRh(chargeRH);
+
+        // Modifier le statut de la visite à 'en attente de validation'
+        creneau.setStatusVisite(StatusVisite.EN_ATTENTE_VALIDATION);
+
+        // Sauvegarder le créneau mis à jour
+        creneauRepository.save(creneau);
+
+        // Créer et envoyer une notification au collaborateur
+        User collaborateur = creneau.getCollaborateur();
+        Notification notification = new Notification();
+        notification.setDestinataire(collaborateur);
+        notification.setDateEnvoi(LocalDateTime.now());
+        notification.setMessage("Le créneau de visite spontanée a été créé. Veuillez consulter le calendrier pour confirmer votre visite avant le " +
+                LocalDate.now().plusDays(2) + " à minuit.");
+
+        // Sauvegarder la notification
+        notificationRepository.save(notification);
+    }
+
+    public Creneau planifierVisiteSpontanee(Long idCreneau, LocalDate date, LocalTime heureDebut, LocalTime heureFin) {
+        // Récupérer le créneau correspondant à la demande de visite spontanée
+        Creneau creneau = creneauRepository.findById(idCreneau)
+                .orElseThrow(() -> new EntityNotFoundException("Creneau non trouvé pour l'ID : " + idCreneau));
+
+        // Vérifier si le créneau est dans le statut "EN_ATTENTE_CREATION_CRENEAU"
+        if (creneau.getStatusVisite() != StatusVisite.EN_ATTENTE_CREATION_CRENEAU) {
+            throw new IllegalStateException("La visite ne peut pas être planifiée car elle n'est pas en attente de création.");
+        }
+
+        // Mettre à jour les informations du créneau
+        creneau.setDate(date);
+        creneau.setHeureDebutVisite(heureDebut);
+        creneau.setHeureFinVisite(heureFin);
+
+        // Mettre à jour le statut de la visite à "EN_ATTENTE_VALIDATION"
+        creneau.setStatusVisite(StatusVisite.EN_ATTENTE_VALIDATION);
+
+        // Sauvegarder le créneau mis à jour
+        Creneau updatedCreneau = creneauRepository.save(creneau);
+
+        // Retourner le créneau mis à jour
+        return updatedCreneau;
+    }
 
 
 
@@ -359,5 +449,40 @@ public Creneau creerVisiteSpontanee(CreneauRequestDTO request, List<MultipartFil
             // Enregistrer la notification
             notificationRepository.save(notification);
         }
+    }
+
+    public Creneau modifierStatutCreneau(Long idCreneau, StatusVisite nouveauStatut) {
+        Creneau creneau = creneauRepository.findById(idCreneau)
+                .orElseThrow(() -> new RuntimeException("Creneau non trouvé"));
+
+        if (creneau.getStatusVisite() == StatusVisite.VALIDE && nouveauStatut == StatusVisite.PLANIFIE) {
+            creneau.setStatusVisite(StatusVisite.PLANIFIE);
+            creneauRepository.save(creneau);
+
+            // Envoi des notifications après la planification
+            envoyerNotificationPlanification(creneau);
+
+            return creneau;
+        }
+
+        throw new RuntimeException("Changement de statut invalide");
+    }
+
+    private void envoyerNotificationPlanification(Creneau creneau) {
+        // Récupérer le collaborateur et le médecin
+        User collaborateur = userRepository.findById(creneau.getCollaborateur().getIdUser())
+                .orElseThrow(() -> new RuntimeException("Collaborateur non trouvé"));
+        User medecin = userRepository.findById(creneau.getMedecin().getIdUser())
+                .orElseThrow(() -> new RuntimeException("Médecin non trouvé"));
+
+        // Créer le message de la notification
+        String message = String.format("Une visite est planifiée pour le %s de %s à %s",
+                creneau.getDate(), creneau.getHeureDebutVisite(), creneau.getHeureFinVisite());
+
+        // Créer et enregistrer la notification pour le collaborateur
+        notificationService.sendNotification(collaborateur, message);
+
+        // Créer et enregistrer la notification pour le médecin
+        notificationService.sendNotification(medecin, message);
     }
 }
