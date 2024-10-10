@@ -32,5 +32,8 @@ public interface CreneauRepository extends JpaRepository<Creneau, Long> {
     boolean existsByCollaborateurAndDateAndHeureDebutVisiteLessThanEqualAndHeureFinVisiteGreaterThanEqual(
             User collaborateur, LocalDate date, LocalTime heureFin, LocalTime heureDebut);
 
+    List<Creneau> findByMedecinAndStatusVisiteIn(User medecin, List<StatusVisite> statuses);
+
+
 }
 

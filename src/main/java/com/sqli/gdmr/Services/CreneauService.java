@@ -1,6 +1,6 @@
 package com.sqli.gdmr.Services;
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
 
 import com.sqli.gdmr.Repositories.*;
 import jakarta.persistence.EntityNotFoundException;
@@ -21,8 +21,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
 
 @Service
 public class CreneauService {
@@ -286,6 +284,28 @@ public void creerCreneauEtEnvoyerNotifications(CreneauCreationDTO creneauDTO) {
     public List<Creneau> getAllCreneaux() {
         return creneauRepository.findAll();
     }
+
+    public List<Creneau> getCreneauxForCurrentMedecin() {
+        User currentUser = userService.getCurrentUser();
+
+        if (currentUser == null || currentUser.getRole() != Role.MEDECIN) {
+            throw new RuntimeException("L'utilisateur actuel n'est pas un médecin ou n'est pas connecté");
+        }
+
+        // Les statuts que nous voulons inclure
+        List<StatusVisite> allowedStatuses = Arrays.asList(StatusVisite.PLANIFIE, StatusVisite.TERMINE, StatusVisite.EN_COURS);
+
+        // Récupérer les créneaux pour le médecin connecté avec les statuts autorisés et les documents associés
+        List<Creneau> creneaux = creneauRepository.findByMedecinAndStatusVisiteIn(currentUser, allowedStatuses);
+
+        // Charger les documents associés pour chaque créneau
+        creneaux.forEach(creneau -> {
+            creneau.setDocuments(documentRepository.findByCreneau_IdCréneau(creneau.getIdCréneau()));
+        });
+
+        return creneaux;
+    }
+
 
     public String supprimerCreneau(Long id) {
         try {
