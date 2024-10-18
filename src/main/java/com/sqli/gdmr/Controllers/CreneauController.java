@@ -1,6 +1,7 @@
 package com.sqli.gdmr.Controllers;
 
 import com.sqli.gdmr.DTOs.CreneauCreationDTO;
+import com.sqli.gdmr.DTOs.ModifierCreneauDTO;
 import com.sqli.gdmr.Enums.StatusVisite;
 import com.sqli.gdmr.Mappers.CreneauCreationMapper;
 import com.sqli.gdmr.Models.Creneau;
@@ -16,6 +17,8 @@ import javax.validation.Valid;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +93,39 @@ public ResponseEntity<String> createCreneau(@RequestBody CreneauCreationDTO cren
         String nouveauStatut = statutMap.get("statut");
         Creneau creneau = creneauService.modifierStatutCreneau(id, StatusVisite.valueOf(nouveauStatut.toUpperCase()));
         return ResponseEntity.ok(creneau);
+    }
+
+    @PutMapping("/{id}/modification-visite")
+    public ResponseEntity<?> modifierVisiteNonValide(@PathVariable Long id, @RequestBody @Valid ModifierCreneauDTO modifierCreneauDTO) {
+        try {
+            // Vérification que l'ID n'est pas null
+            if (id == null) {
+                return ResponseEntity.badRequest().body("L'ID du créneau ne peut pas être null");
+            }
+
+            // Vérification que le DTO n'est pas null
+            if (modifierCreneauDTO == null) {
+                return ResponseEntity.badRequest().body("Les données de modification ne peuvent pas être null");
+            }
+
+            // Vérification des champs obligatoires
+            if (modifierCreneauDTO.getDate() == null ||
+                    modifierCreneauDTO.getHeureDebutVisite() == null ||
+                    modifierCreneauDTO.getHeureFinVisite() == null ||
+                    modifierCreneauDTO.getMedecinId() == null) {
+                return ResponseEntity.badRequest().body("Tous les champs sont obligatoires");
+            }
+
+            Creneau creneau = creneauService.modifierVisiteNonValide(id, modifierCreneauDTO);
+            return ResponseEntity.ok(creneau);
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erreur lors de la modification de la visite : " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erreur serveur lors de la modification de la visite : " + e.getMessage());
+        }
     }
 
 

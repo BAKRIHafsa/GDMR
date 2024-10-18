@@ -1,9 +1,12 @@
 package com.sqli.gdmr.Services;
 import java.io.IOException;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+import com.sqli.gdmr.DTOs.ModifierCreneauDTO;
 import com.sqli.gdmr.Repositories.*;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.multipart.MultipartFile;
 
 
@@ -158,7 +161,40 @@ public void creerCreneauEtEnvoyerNotifications(CreneauCreationDTO creneauDTO) {
             ". Veuillez consulter le calendrier pour confirmer votre visite avant le " +
             LocalDate.now().plusDays(2) + " à minuit.");
     notificationRepository.save(notification);
+    checkAndPlanCreneau();
 }
+
+    @Scheduled(fixedDelay = 86400000) // Vérifie une fois par jour
+    public void checkAndPlanCreneau() {
+        List<Creneau> creneauxToCheck = creneauRepository.findByStatusVisite(StatusVisite.EN_ATTENTE_VALIDATION);
+
+        for (Creneau creneau : creneauxToCheck) {
+            LocalDate dateCreation = creneau.getDateCreation();
+            LocalDate today = LocalDate.now();
+
+            if (ChronoUnit.DAYS.between(dateCreation, today) >= 2) {
+                creneau.setStatusVisite(StatusVisite.PLANIFIE);
+                creneauRepository.save(creneau);
+
+                Notification notification = new Notification();
+                notification.setDestinataire(creneau.getCollaborateur());
+                notification.setDateEnvoi(LocalDateTime.now());
+                notification.setMessage("Vous n'avez pas validé le créneau. Votre visite médicale est désormais planifiée pour le " +
+                        creneau.getDate() + " à " + creneau.getHeureDebutVisite() + ".");
+                notification.setCreneau(creneau);
+                notificationRepository.save(notification);
+
+                Notification notificationMedecin = new Notification();
+                notificationMedecin.setDestinataire(creneau.getMedecin());
+                notificationMedecin.setDateEnvoi(LocalDateTime.now());
+                notificationMedecin.setMessage("Une visite médicale a été planifiée pour le " +
+                        creneau.getDate() + " à " + creneau.getHeureDebutVisite() + ". Veuillez vous préparer.");
+                notificationMedecin.setCreneau(creneau); // Lier la notification au créneau
+                notificationRepository.save(notificationMedecin);
+            }
+        }
+    }
+
     public void mettreAJourCreneauVisiteSpontanee(Long collaborateurId, CreneauCreationDTO creneauCreationDTO) {
         // Rechercher un créneau existant pour le collaborateur avec une visite spontanée et le statut en attente de création
         Creneau creneau = creneauRepository.findByCollaborateurAndTypes(
@@ -251,31 +287,31 @@ public void creerCreneauEtEnvoyerNotifications(CreneauCreationDTO creneauDTO) {
 
 
 
-    public Creneau saveCreneau(Creneau creneau) {
-        return creneauRepository.save(creneau);
-    }
-
-    public void notifyCollaborateurs(List<Long> collaborateursIds, Creneau creneau) {
-        List<User> collaborateurs = userRepository.findAllById(collaborateursIds);
-
-        String message = String.format(
-                "Le Chargé RH a créé un créneau pour le %s à partir de %s jusqu'à %s. Veuillez choisir le créneau qui vous convient avant %s.",
-                creneau.getDate(),
-                creneau.getHeureDebutVisite(),
-                creneau.getHeureFinVisite(),
-                LocalDateTime.now().plusDays(2).toLocalDate() // Date limite pour choisir
-        );
-
-        for (User collaborateur : collaborateurs) {
-            Notification notification = new Notification();
-            notification.setMessage(message);
-            notification.setLu(false);
-            notification.setDateEnvoi(LocalDateTime.now());
-            notification.setDestinataire(collaborateur);
-
-            notificationService.saveNotification(notification);
-        }
-    }
+//    public Creneau saveCreneau(Creneau creneau) {
+//        return creneauRepository.save(creneau);
+//    }
+//
+//    public void notifyCollaborateurs(List<Long> collaborateursIds, Creneau creneau) {
+//        List<User> collaborateurs = userRepository.findAllById(collaborateursIds);
+//
+//        String message = String.format(
+//                "Le Chargé RH a créé un créneau pour le %s à partir de %s jusqu'à %s. Veuillez choisir le créneau qui vous convient avant %s.",
+//                creneau.getDate(),
+//                creneau.getHeureDebutVisite(),
+//                creneau.getHeureFinVisite(),
+//                LocalDateTime.now().plusDays(2).toLocalDate() // Date limite pour choisir
+//        );
+//
+//        for (User collaborateur : collaborateurs) {
+//            Notification notification = new Notification();
+//            notification.setMessage(message);
+//            notification.setLu(false);
+//            notification.setDateEnvoi(LocalDateTime.now());
+//            notification.setDestinataire(collaborateur);
+//
+//            notificationService.saveNotification(notification);
+//        }
+//    }
 
     public Optional<Creneau> getCreneauById(Long id) {
         return creneauRepository.findById(id);
@@ -479,7 +515,6 @@ public Creneau creerVisiteSpontanee(CreneauRequestDTO request, List<MultipartFil
             creneau.setStatusVisite(StatusVisite.PLANIFIE);
             creneauRepository.save(creneau);
 
-            // Envoi des notifications après la planification
             envoyerNotificationPlanification(creneau);
 
             return creneau;
@@ -487,6 +522,53 @@ public Creneau creerVisiteSpontanee(CreneauRequestDTO request, List<MultipartFil
 
         throw new RuntimeException("Changement de statut invalide");
     }
+
+    public Creneau modifierVisiteNonValide(Long idCreneau, ModifierCreneauDTO modifierCreneauDTO) {
+        // Récupérer le créneau par son id
+        Creneau creneau = creneauRepository.findById(idCreneau)
+                .orElseThrow(() -> new RuntimeException("Creneau non trouvé pour l'ID : " + idCreneau));
+
+
+        // Vérifier si le statut de la visite est NON_VALIDE
+        if (creneau.getStatusVisite() == StatusVisite.NON_VALIDE) {
+            // Mettre à jour les informations du créneau à partir du DTO
+            creneau.setDate(modifierCreneauDTO.getDate());
+            creneau.setHeureDebutVisite(modifierCreneauDTO.getHeureDebutVisite());
+            creneau.setHeureFinVisite(modifierCreneauDTO.getHeureFinVisite());
+
+            // Récupérer et associer le nouveau médecin à partir de l'ID dans le DTO
+            creneau.setMedecin(medecinRepository.findById(modifierCreneauDTO.getMedecinId())
+                    .orElseThrow(() -> new RuntimeException("Médecin non trouvé pour l'ID : " + modifierCreneauDTO.getMedecinId())));
+
+            if (creneau.getCollaborateur() == null) {
+                throw new RuntimeException("Collaborateur non associé à ce créneau");
+            }
+            // Changer le statut de la visite à EN_ATTENTE_VALIDATION après modification
+            creneau.setStatusVisite(StatusVisite.EN_ATTENTE_VALIDATION);
+
+            // Sauvegarder les modifications du créneau
+            Creneau updatedCreneau = creneauRepository.save(creneau);
+
+            // Création et enregistrement d'une notification pour le collaborateur
+            Notification notification = new Notification();
+            notification.setMessage("Le créneau de votre visite a été modifié par le chargé RH. "
+                    + "Veuillez consulter le calendrier pour valider les nouveaux détails.");
+            notification.setDateEnvoi(LocalDateTime.now());
+            notification.setCreneau(creneau);
+            notification.setDestinataire(creneau.getCollaborateur()); // Collaborateur concerné
+            notification.setDaysBefore(3); // Exemple : notification 3 jours avant la visite
+
+            // Sauvegarder la notification
+            notificationRepository.save(notification);
+
+            return updatedCreneau;
+        }
+
+        // Si le statut est différent de NON_VALIDE, lancer une exception
+        throw new RuntimeException("Changement de statut invalide pour le créneau d'ID : " + idCreneau);
+    }
+
+
 
     private void envoyerNotificationPlanification(Creneau creneau) {
         // Récupérer le collaborateur et le médecin

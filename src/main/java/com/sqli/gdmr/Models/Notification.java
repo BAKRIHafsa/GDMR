@@ -17,6 +17,12 @@ public class Notification {
     private Boolean lu = false;
     private LocalDateTime dateEnvoi;
 
+    @ManyToOne // Lié à Creneau
+    private Creneau creneau;
+
+    private int daysBefore;
+
+
     @ManyToOne
     @JoinColumn(name = "destinataire_id")
     private User destinataire;

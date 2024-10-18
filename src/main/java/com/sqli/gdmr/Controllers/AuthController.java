@@ -36,42 +36,47 @@ public class AuthController {
     @Autowired
     private UserRepository userRepository;
 
-@PostMapping("/auth/login")
-public Map<String, String> login(@RequestBody LoginRequest loginRequest) {
-    String username = loginRequest.getUsername();
-    String password = loginRequest.getPassword();
+    @PostMapping("/auth/login")
+    public Map<String, String> login(@RequestBody LoginRequest loginRequest) {
+        String username = loginRequest.getUsername();
+        String password = loginRequest.getPassword();
 
-    //System.out.println("user: " + username + " password: " + password);
+        org.springframework.security.core.Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(username, password)
+        );
 
-    org.springframework.security.core.Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(username, password)
-    );
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
-    UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-    User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+        // Vérifiez si c'est la première connexion
+        if (user.isFirstLogin()) {
+            // Retournez une réponse indiquant que l'utilisateur doit changer son mot de passe
+            return Map.of("change_password_required", "true");
+        }
 
-    Instant instant = Instant.now();
-    String scope = authentication.getAuthorities().stream()
-            .map(a -> a.getAuthority())
-            .collect(Collectors.joining(" "));
+        Instant instant = Instant.now();
+        String scope = authentication.getAuthorities().stream()
+                .map(a -> a.getAuthority())
+                .collect(Collectors.joining(" "));
 
-    JwtClaimsSet jwtClaimsSet = JwtClaimsSet.builder()
-            .issuedAt(instant)
-            .expiresAt(instant.plus(60, ChronoUnit.MINUTES))
-            .subject(username)
-            .claim("scope", scope)
-            .claim("userId", user.getIdUser())
-            .build();
+        JwtClaimsSet jwtClaimsSet = JwtClaimsSet.builder()
+                .issuedAt(instant)
+                .expiresAt(instant.plus(60, ChronoUnit.MINUTES))
+                .subject(username)
+                .claim("scope", scope)
+                .claim("userId", user.getIdUser())
+                .build();
 
-    JwtEncoderParameters jwtEncoderParameters = JwtEncoderParameters.from(
-            JwsHeader.with(MacAlgorithm.HS512).build(),
-            jwtClaimsSet
-    );
+        JwtEncoderParameters jwtEncoderParameters = JwtEncoderParameters.from(
+                JwsHeader.with(MacAlgorithm.HS512).build(),
+                jwtClaimsSet
+        );
 
-    String jwt = jwtEncoder.encode(jwtEncoderParameters).getTokenValue();
+        String jwt = jwtEncoder.encode(jwtEncoderParameters).getTokenValue();
 
-    return Map.of("access_token", jwt);
-}
+        return Map.of("access_token", jwt);
+    }
+
 
 }

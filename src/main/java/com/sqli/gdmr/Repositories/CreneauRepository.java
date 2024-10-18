@@ -34,6 +34,9 @@ public interface CreneauRepository extends JpaRepository<Creneau, Long> {
 
     List<Creneau> findByMedecinAndStatusVisiteIn(User medecin, List<StatusVisite> statuses);
 
+    List<Creneau> findAllByStatusVisite(StatusVisite statusVisite);
+
+
 
 }
 

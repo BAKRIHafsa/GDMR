@@ -25,6 +25,8 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserStatus status = UserStatus.CREATED;
     private LocalDate dateNaissance;
+    private boolean firstLogin; // Indique si c'est la première connexion de l'utilisateur
+
     @Override
     public String toString() {
         return "User{" +

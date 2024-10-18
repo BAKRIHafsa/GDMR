@@ -1,5 +1,6 @@
 package com.sqli.gdmr.Services;
 
+import com.sqli.gdmr.DTOs.ChangePasswordRequestDTO;
 import com.sqli.gdmr.DTOs.CreateMedecinRequestDTO;
 import com.sqli.gdmr.DTOs.ModifieCollaborateur;
 import com.sqli.gdmr.DTOs.UserDTO;
@@ -49,7 +50,12 @@ public class UserService {
     @Autowired
     private JwtDecoder jwtDecoder;
 
-
+    public void changePassword(ChangePasswordRequestDTO request) {
+        User user = getCurrentUser(); // Récupérez l'utilisateur actuel
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setFirstLogin(false); // Marquez que l'utilisateur a changé son mot de passe
+        userRepository.save(user); // Enregistrez les modifications
+    }
 
     public User findByUsername(String username) {
         return userRepository.findByUsername(username)

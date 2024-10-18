@@ -45,6 +45,7 @@ public class DisponibilitéController {
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
         }
+
     }
 
     @DeleteMapping("/supprimer/{id}")

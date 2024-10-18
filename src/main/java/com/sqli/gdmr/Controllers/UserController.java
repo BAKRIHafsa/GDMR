@@ -1,6 +1,7 @@
 package com.sqli.gdmr.Controllers;
 
 import com.sqli.gdmr.DTOs.ChangePasswordDTO;
+import com.sqli.gdmr.DTOs.ChangePasswordRequestDTO;
 import com.sqli.gdmr.Enums.Role;
 import com.sqli.gdmr.Models.User;
 import com.sqli.gdmr.DTOs.UserDTO;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +29,12 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+
+    @PostMapping("/change-password-premier-fois")
+    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequestDTO request) {
+        userService.changePassword(request); // Appelez la méthode de service pour changer le mot de passe
+        return ResponseEntity.ok().build(); // Retournez une réponse appropriée
+    }
 
     @GetMapping("/profile")
     public User getCurrentUserInfo() {
