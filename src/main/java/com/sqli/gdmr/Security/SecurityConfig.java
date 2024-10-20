@@ -69,6 +69,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ADMINISTRATEUR")//permitAll()
                         .requestMatchers("/api/chargéRH/**").hasAuthority("CHARGE_RH")//permitAll()
+                        .requestMatchers("/api/collab/annuler/**").hasAnyAuthority("COLLABORATEUR", "MEDECIN", "ADMINISTRATEUR")
                         .requestMatchers("/api/collab/**").hasAnyAuthority("COLLABORATEUR", "CHARGE_RH", "ADMINISTRATEUR")
                         .requestMatchers("/api/med/disponibles").hasAuthority("CHARGE_RH")
                         .requestMatchers("/api/med/**").hasAuthority("MEDECIN")

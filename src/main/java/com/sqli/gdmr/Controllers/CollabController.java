@@ -34,6 +34,18 @@ public class CollabController {
         return ResponseEntity.ok(count);
     }
 
+    @PutMapping("/annuler/{id}")
+    public ResponseEntity<?> annulerCreneau(@PathVariable Long id, @RequestBody String motifAnnulation) {
+        try {
+            creneauService.annulerCreneauEtEnvoyerNotification(id, motifAnnulation);
+            return ResponseEntity.ok().body("Visite annulée avec succès.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+
+
     @GetMapping("/completed-week-count")
     public ResponseEntity<Long> getCompletedVisitsCountForCurrentWeekCollab() {
         long count = dashboardRHService.countCompletedVisitsForCurrentWeekCollab();

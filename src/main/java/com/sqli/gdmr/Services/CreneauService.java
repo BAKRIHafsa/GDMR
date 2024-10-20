@@ -329,7 +329,7 @@ public void creerCreneauEtEnvoyerNotifications(CreneauCreationDTO creneauDTO) {
         }
 
         // Les statuts que nous voulons inclure
-        List<StatusVisite> allowedStatuses = Arrays.asList(StatusVisite.PLANIFIE, StatusVisite.TERMINE, StatusVisite.EN_COURS);
+        List<StatusVisite> allowedStatuses = Arrays.asList(StatusVisite.PLANIFIE, StatusVisite.TERMINE, StatusVisite.EN_COURS, StatusVisite.ANNULE);
 
         // Récupérer les créneaux pour le médecin connecté avec les statuts autorisés et les documents associés
         List<Creneau> creneaux = creneauRepository.findByMedecinAndStatusVisiteIn(currentUser, allowedStatuses);
@@ -601,4 +601,67 @@ public Creneau creerVisiteSpontanee(CreneauRequestDTO request, List<MultipartFil
         // Créer et enregistrer la notification pour le médecin
         notificationService.sendNotification(medecin, message);
     }
+
+    public void annulerCreneauEtEnvoyerNotification(Long idCreneau, String motifAnnulation) throws Exception {
+        // Récupérer le créneau
+        Creneau creneau = creneauRepository.findById(idCreneau)
+                .orElseThrow(() -> new Exception("Créneau non trouvé."));
+
+        // Vérifier si le créneau est planifié
+        if (!creneau.getStatusVisite().equals(StatusVisite.PLANIFIE)) {
+            throw new Exception("Seules les visites planifiées peuvent être annulées.");
+        }
+
+        // Récupérer l'utilisateur connecté
+        User utilisateur = userService.getCurrentUser();
+
+        // Mettre à jour le statut du créneau à "ANNULE"
+        creneau.setStatusVisite(StatusVisite.ANNULE);
+
+        // Initialisation de la variable pour le message de notification
+        String utilisateurNom = utilisateur.getNom(); // Récupérer le nom de l'utilisateur
+        String message = "";
+
+        // Vérifier si c'est le médecin ou le collaborateur qui annule en fonction du rôle de l'utilisateur
+        String roleUtilisateur = utilisateur.getRole().name(); // Récupérer le rôle de l'utilisateur
+
+        if (roleUtilisateur.equals("MEDECIN") && utilisateur.equals(creneau.getMedecin())) {
+            // Si c'est le médecin qui annule
+            creneau.setJustifAnnuleMedecin(motifAnnulation);
+            message = "Le médecin " + utilisateurNom + " a annulé un créneau.\n" +
+                    "Motif d'annulation : " + motifAnnulation;
+        } else if (roleUtilisateur.equals("COLLABORATEUR") && utilisateur.equals(creneau.getCollaborateur())) {
+            // Si c'est le collaborateur qui annule
+            creneau.setJustifAnnuleCollaborateur(motifAnnulation);
+            message = "Le collaborateur " + utilisateurNom + " a annulé un créneau.\n" +
+                    "Motif d'annulation : " + motifAnnulation;
+        } else {
+            throw new Exception("Seul le médecin ou le collaborateur peut annuler cette visite.");
+        }
+
+        // Enregistrer les modifications du créneau
+        creneauRepository.save(creneau);
+
+        // Récupérer le Chargé RH associé au créneau
+        User chargeRH = creneau.getChargeRh();
+
+        if (chargeRH != null) {
+            // Créer et enregistrer une notification pour le Chargé RH
+            Notification notification = new Notification();
+            notification.setDestinataire(chargeRH); // Associer le Chargé RH comme destinataire
+            notification.setDateEnvoi(LocalDateTime.now());
+
+            // Ajouter le créneau à la notification
+            notification.setCreneau(creneau); // Lier le créneau à la notification
+
+            // Ajouter le message personnalisé à la notification
+            notification.setMessage(message);
+
+            // Enregistrer la notification
+            notificationRepository.save(notification);
+        }
+    }
+
+
+
 }
