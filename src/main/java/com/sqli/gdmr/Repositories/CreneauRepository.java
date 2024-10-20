@@ -17,6 +17,8 @@ import java.util.Optional;
 @Repository
 public interface CreneauRepository extends JpaRepository<Creneau, Long> {
     List<Creneau> findByCollaborateur_idUser(Long idUser);
+    @Query("SELECT c FROM Creneau c WHERE c.collaborateur.idUser = :userId OR c.chargeRh.idUser = :userId OR c.medecin.idUser = :userId")
+    List<Creneau> findByUserId(@Param("userId") Long userId);
 
     List<Creneau> findByStatusVisite(StatusVisite statusVisite);
 
@@ -35,6 +37,7 @@ public interface CreneauRepository extends JpaRepository<Creneau, Long> {
     List<Creneau> findByMedecinAndStatusVisiteIn(User medecin, List<StatusVisite> statuses);
 
     List<Creneau> findAllByStatusVisite(StatusVisite statusVisite);
+
 
 
 

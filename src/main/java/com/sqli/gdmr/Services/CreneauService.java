@@ -358,12 +358,26 @@ public void creerCreneauEtEnvoyerNotifications(CreneauCreationDTO creneauDTO) {
     }
 
     public List<Creneau> getAllCreneauxCollab() {
+        // Récupérer l'utilisateur actuel
         User currentUser = userService.getCurrentUser();
-        if (currentUser != null && currentUser.getRole() == Role.COLLABORATEUR) {
-            return creneauRepository.findByCollaborateur_idUser(currentUser.getIdUser());
+
+        // Vérifier que l'utilisateur actuel existe
+        if (currentUser != null) {
+            Long userId = currentUser.getIdUser();
+
+            // Récupérer les créneaux pour cet utilisateur
+            List<Creneau> creneaux = creneauRepository.findByUserId(userId);
+
+            // Retourner la liste des créneaux associés
+            return creneaux;
         }
+
+        // Si aucun utilisateur n'est connecté, retourner une liste vide
         return List.of();
     }
+
+
+
 
     public List<Creneau> getAllCreneauxPlanifies() {
         return creneauRepository.findByStatusVisite(StatusVisite.PLANIFIE);
