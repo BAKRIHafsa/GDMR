@@ -1,6 +1,7 @@
 package com.sqli.gdmr.Controllers;
 
 import com.sqli.gdmr.DTOs.DashboardRHDTO;
+import com.sqli.gdmr.Enums.StatusVisite;
 import com.sqli.gdmr.Models.Creneau;
 import com.sqli.gdmr.Models.Medecin;
 import com.sqli.gdmr.Services.CreneauService;
@@ -8,12 +9,10 @@ import com.sqli.gdmr.Services.DashboardRHService;
 import com.sqli.gdmr.Services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,6 +63,18 @@ public class MedecinController {
         } catch (RuntimeException e) {
             log.error("Error fetching creneaux", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    @PutMapping(value = "/status/{idCreneau}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> updateCreneauStatusEtEnvoiNotif(
+            @PathVariable Long idCreneau,
+            @RequestBody StatusVisite status) {
+        try {
+            creneauService.updateCreneauStatusEtEnvoieNotif(idCreneau, status);
+            return ResponseEntity.ok("Statut du créneau mis à jour avec succès.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 

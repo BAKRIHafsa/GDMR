@@ -662,6 +662,40 @@ public Creneau creerVisiteSpontanee(CreneauRequestDTO request, List<MultipartFil
         }
     }
 
+    public void updateCreneauStatusEtEnvoieNotif(Long idCreneau, StatusVisite status) throws Exception {
+        // Récupération du créneau par son ID
+        Creneau creneau = creneauRepository.findById(idCreneau)
+                .orElseThrow(() -> new Exception("Créneau non trouvé."));
+
+        // Vérification de la validité du changement de statut
+        if (status == StatusVisite.EN_COURS && creneau.getStatusVisite() != StatusVisite.PLANIFIE) {
+            throw new Exception("Impossible de passer à EN_COURS car le statut actuel n'est pas PLANIFIE.");
+        }
+
+        // Mise à jour du statut du créneau
+        creneau.setStatusVisite(status);
+        creneauRepository.save(creneau);
+
+        // Préparation du message de notification
+        String message = "Le statut de la visite pour le créneau ID " + creneau.getIdCréneau() +
+                " a été mis à jour en " + creneau.getStatusVisite();
+
+        // Récupération des informations du chargé RH
+        User chargeRh = creneau.getChargeRh(); // Assurez-vous que le créneau a un chargé RH associé
+        if (chargeRh != null) {
+            // Création de la notification
+            Notification notification = new Notification();
+            notification.setDestinataire(chargeRh);
+            notification.setMessage(message);
+            notification.setDateEnvoi(LocalDateTime.now());
+
+            // Sauvegarde de la notification dans la base de données
+            notificationRepository.save(notification);
+        } else {
+            // Gérer le cas où il n'y a pas de chargé RH associé (si nécessaire)
+            System.out.println("Aucun chargé RH associé pour ce créneau.");
+        }
+    }
 
 
 }

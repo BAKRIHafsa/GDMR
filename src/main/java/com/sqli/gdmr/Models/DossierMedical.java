@@ -12,8 +12,13 @@ public class DossierMedical {
     private Long idDossierMedical;
     private String description;
 
+    private String medicaments;
+
     @OneToOne
     private Creneau creneau;
 
+    @ManyToOne
+    @JoinColumn(name = "idCollaborateur")
+    private User collaborateur;
 
 }
