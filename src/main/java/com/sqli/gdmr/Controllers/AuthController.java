@@ -37,7 +37,7 @@ public class AuthController {
     private UserRepository userRepository;
 
     @PostMapping("/auth/login")
-    public Map<String, String> login(@RequestBody LoginRequest loginRequest) {
+    public Map<String, Object> login(@RequestBody LoginRequest loginRequest) {
         String username = loginRequest.getUsername();
         String password = loginRequest.getPassword();
 
@@ -48,12 +48,6 @@ public class AuthController {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
-
-        // Vérifiez si c'est la première connexion
-        if (user.isFirstLogin()) {
-            // Retournez une réponse indiquant que l'utilisateur doit changer son mot de passe
-            return Map.of("change_password_required", "true");
-        }
 
         Instant instant = Instant.now();
         String scope = authentication.getAuthorities().stream()
@@ -75,7 +69,17 @@ public class AuthController {
 
         String jwt = jwtEncoder.encode(jwtEncoderParameters).getTokenValue();
 
-        return Map.of("access_token", jwt);
+        // Vérifiez si c'est la première connexion
+        boolean isFirstLogin = user.isFirstLogin();
+
+        // Retournez la réponse avec le jeton et l'indication du changement de mot de passe
+        return Map.of(
+                "access_token", jwt,
+                "userId", user.getIdUser(),
+                "username", username,
+                "change_password_required", isFirstLogin,
+                "firstLogin", isFirstLogin
+        );
     }
 
 

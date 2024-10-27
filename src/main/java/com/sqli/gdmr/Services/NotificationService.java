@@ -88,24 +88,26 @@ public class NotificationService {
 
         for (Creneau creneau : creneaux) {
             LocalDate dateVisite = creneau.getDate();
-            long daysUntilVisit = java.time.temporal.ChronoUnit.DAYS.between(today, dateVisite);
+            if (dateVisite != null) {
+                long daysUntilVisit = java.time.temporal.ChronoUnit.DAYS.between(today, dateVisite);
 
-            // Vérifier le nombre de jours avant la visite
-            if (daysUntilVisit == 7 && !hasReminderBeenSent(creneau, 7)) {
-                // Notification pour le collaborateur
-                sendReminder(creneau.getCollaborateur(), "Rappel : Votre visite est dans une semaine.", creneau, 7);
-                // Notification pour le médecin
-                sendReminder(creneau.getMedecin(), "Rappel : Vous avez une visite prévue dans une semaine.", creneau, 7);
-            } else if (daysUntilVisit == 3 && !hasReminderBeenSent(creneau, 3)) {
-                // Notification pour le collaborateur
-                sendReminder(creneau.getCollaborateur(), "Rappel : Votre visite est dans 3 jours.", creneau, 3);
-                // Notification pour le médecin
-                sendReminder(creneau.getMedecin(), "Rappel : Vous avez une visite prévue dans 3 jours.", creneau, 3);
-            } else if (daysUntilVisit == 1 && !hasReminderBeenSent(creneau, 1)) {
-                // Notification pour le collaborateur
-                sendReminder(creneau.getCollaborateur(), "Rappel : Votre visite est demain.", creneau, 1);
-                // Notification pour le médecin
-                sendReminder(creneau.getMedecin(), "Rappel : Vous avez une visite prévue demain.", creneau, 1);
+                // Vérifier le nombre de jours avant la visite
+                if (daysUntilVisit == 7 && !hasReminderBeenSent(creneau, 7)) {
+                    // Notification pour le collaborateur
+                    sendReminder(creneau.getCollaborateur(), "Rappel : Votre visite est dans une semaine.", creneau, 7);
+                    // Notification pour le médecin
+                    sendReminder(creneau.getMedecin(), "Rappel : Vous avez une visite prévue dans une semaine.", creneau, 7);
+                } else if (daysUntilVisit == 3 && !hasReminderBeenSent(creneau, 3)) {
+                    // Notification pour le collaborateur
+                    sendReminder(creneau.getCollaborateur(), "Rappel : Votre visite est dans 3 jours.", creneau, 3);
+                    // Notification pour le médecin
+                    sendReminder(creneau.getMedecin(), "Rappel : Vous avez une visite prévue dans 3 jours.", creneau, 3);
+                } else if (daysUntilVisit == 1 && !hasReminderBeenSent(creneau, 1)) {
+                    // Notification pour le collaborateur
+                    sendReminder(creneau.getCollaborateur(), "Rappel : Votre visite est demain.", creneau, 1);
+                    // Notification pour le médecin
+                    sendReminder(creneau.getMedecin(), "Rappel : Vous avez une visite prévue demain.", creneau, 1);
+                }
             }
         }
     }

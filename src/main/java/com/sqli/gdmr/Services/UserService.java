@@ -52,9 +52,13 @@ public class UserService {
 
     public void changePassword(ChangePasswordRequestDTO request) {
         User user = getCurrentUser(); // Récupérez l'utilisateur actuel
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setFirstLogin(false); // Marquez que l'utilisateur a changé son mot de passe
-        userRepository.save(user); // Enregistrez les modifications
+        if (user != null) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+            user.setFirstLogin(false);
+            userRepository.save(user);
+        } else {
+            throw new UsernameNotFoundException("Utilisateur non trouvé");
+        }
     }
 
     public User findByUsername(String username) {

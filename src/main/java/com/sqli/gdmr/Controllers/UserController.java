@@ -9,8 +9,10 @@ import com.sqli.gdmr.Services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
@@ -31,10 +33,18 @@ public class UserController {
 
 
     @PostMapping("/change-password-premier-fois")
+    @PreAuthorize("isAuthenticated()") // Vérifie si l'utilisateur est authentifié
     public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequestDTO request) {
-        userService.changePassword(request); // Appelez la méthode de service pour changer le mot de passe
-        return ResponseEntity.ok().build(); // Retournez une réponse appropriée
+        try {
+            userService.changePassword(request);
+            return ResponseEntity.ok("Mot de passe changé avec succès"); // Réponse de succès
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage()); // Utilisateur non trouvé
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors du changement de mot de passe"); // Erreur générique
+        }
     }
+
 
     @GetMapping("/profile")
     public User getCurrentUserInfo() {

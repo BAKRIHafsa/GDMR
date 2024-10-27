@@ -16,9 +16,14 @@ public class DossierMedicalController {
     @Autowired
     private DossierMedicalService dossierMedicalService;
     @PostMapping("/ajouter")
-    public ResponseEntity<?> ajouterDossierMedical(@RequestBody DossierMedical dossierMedical,@RequestParam Long idCollaborateur) {
+    public ResponseEntity<?> ajouterDossierMedical(
+            @RequestBody DossierMedical dossierMedical,
+            @RequestParam(required = true) Long idCollaborateur) { // `required = true` will enforce its presence
+        if (idCollaborateur == null) {
+            return ResponseEntity.badRequest().body("Collaborateur ID is required");
+        }
         try {
-            DossierMedical newDossier = dossierMedicalService.ajouterDossierMedical(dossierMedical,idCollaborateur);
+            DossierMedical newDossier = dossierMedicalService.ajouterDossierMedical(dossierMedical, idCollaborateur);
             return ResponseEntity.ok(newDossier);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
@@ -28,6 +33,7 @@ public class DossierMedicalController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
         }
     }
+
 
     // Endpoint pour récupérer un dossier médical par créneau
     @GetMapping("/creneau/{idCreneau}")
